@@ -14,8 +14,13 @@ typedef MPageRouteBuilder<T> = PageRoute<T> Function(
 /// [loading] 是加载时的 Widget 提供统一的样式
 typedef MInitializer = Widget Function(Widget loading, Widget child);
 
-/// 路由解析器 返回 [null] 时，表示非当前模块内的路由
-typedef MRouteParser = RouteSettings? Function(RouteSettings settings);
+/// 简易快速初始化器 只支持同步初始化
+typedef MSInitializer = void Function(BuildContext context);
+
+/// 路由解析器 返回 [null] 时，表示非当前模块内的路由 当前不关注
+/// [context] 是通过ModulesInitializer获取的 非Navigator 或者 Route 相关的 请勿使用相关功能
+typedef MRouteParser = RouteSettings? Function(
+    BuildContext context, RouteSettings settings);
 
 /// page content widget 默认的 的路由生成器
 typedef MPageRouteGenerator<T> = PageRoute<T> Function(
@@ -38,6 +43,9 @@ abstract class Module {
   /// 模块初始化器
   MInitializer? get initializer;
 
+  /// 模块初始化器 简易版
+  MSInitializer? get simpleInitializer;
+
   /// 指定当前模块内的路由解析器 仅仅对[routes] 生效
   MRouteParser? get routeParser => null;
 
@@ -47,11 +55,13 @@ abstract class Module {
     MPageWrapper? pageWrapper,
     Map<String, MPageRouteBuilder> routes = const {},
     MInitializer? initializer,
+    MSInitializer? simpleInitializer,
     MRouteParser? routeParser,
   }) =>
       _Module(
           name: name,
           initializer: initializer,
+          simpleInitializer: simpleInitializer,
           pages: pages,
           pageWrapper: pageWrapper,
           routes: routes,
@@ -62,6 +72,7 @@ class _Module implements Module {
   _Module({
     required this.name,
     this.initializer,
+    this.simpleInitializer,
     this.pages = const {},
     this.pageWrapper,
     this.routes = const {},
@@ -73,6 +84,9 @@ class _Module implements Module {
 
   @override
   final MInitializer? initializer;
+
+  @override
+  final MSInitializer? simpleInitializer;
 
   @override
   final Map<String, MPageBuilder> pages;

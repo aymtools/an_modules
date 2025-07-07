@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'modules.dart';
 
 class ModulePackage {
+  /// 简单快速初始化时 注册这里
+  final List<MSInitializer> _allModuleSimpleInitializers = [];
+
   /// 当模块需要自定义全局初始化时注册这里
   final List<MInitializer> _allModuleInitializers = [];
 
@@ -24,6 +27,7 @@ class ModulePackage {
     );
   };
 
+  ///  设置默认的路由生成器
   set pageRouteGenerator(MPageRouteGenerator generator) {
     _defaultPageRouteGenerator = generator;
   }
@@ -42,10 +46,13 @@ class ModulePackage {
   RouteFactory get generateRouteFactory {
     return (RouteSettings settings) {
       RouteSettings? config;
-      for (var parser in _allModuleRouteParsers) {
-        config = parser(settings);
-        if (config != null) {
-          break;
+      if (_allModuleRouteParsers.isNotEmpty) {
+        final context = _initializeModulesKey.currentContext!;
+        for (var parser in _allModuleRouteParsers) {
+          config = parser(context, settings);
+          if (config != null) {
+            break;
+          }
         }
       }
       config ??= settings;
@@ -96,7 +103,7 @@ class ModulePackage {
     module._initialize(this);
   }
 
-  final GlobalKey _initializeModulesKey = GlobalKey();
+  GlobalKey _initializeModulesKey = GlobalKey();
   final GlobalKey _initializeLoadingKey = GlobalKey();
 
   Widget? _moduleInitializerLoading;
@@ -110,6 +117,9 @@ class ModulePackage {
 
 extension on Module {
   void _initialize(ModulePackage package) {
+    if (simpleInitializer != null) {
+      package._allModuleSimpleInitializers.add(simpleInitializer!);
+    }
     if (initializer != null) {
       package._allModuleInitializers.add(initializer!);
     }
@@ -169,7 +179,7 @@ class _ExtModuleAssetBundle extends CachingAssetBundle {
   }
 }
 
-class ModulesInitializer extends StatelessWidget {
+class ModulesInitializer extends StatefulWidget {
   final ModulePackage modulePackage;
   final Widget loading;
   final Widget child;
@@ -182,14 +192,47 @@ class ModulesInitializer extends StatelessWidget {
       : super(key: key ?? modulePackage._initializeModulesKey);
 
   @override
+  State<ModulesInitializer> createState() => _ModulesInitializerState();
+}
+
+class _ModulesInitializerState extends State<ModulesInitializer> {
+  bool _isNotFirst = false;
+
+  void _firstBuild(BuildContext context) {
+    if (_isNotFirst) return;
+    _isNotFirst = true;
+
+    final msis =
+        List.unmodifiable(widget.modulePackage._allModuleSimpleInitializers);
+    for (final i in msis) {
+      final Object? debugCheckForReturnedFuture = i.call(context) as dynamic;
+
+      assert(() {
+        if (debugCheckForReturnedFuture is Future) {
+          throw FlutterError.fromParts(<DiagnosticsNode>[
+            ErrorSummary('${i.runtimeType} returned a Future.'),
+            ErrorDescription(
+                '${i.runtimeType} must be a void method without an `async` keyword.'),
+          ]);
+        }
+        return true;
+      }());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final mci = List.unmodifiable(modulePackage._allModuleInitializers);
-    var result = child;
-    for (final wrapper in mci) {
+    if (widget.key != widget.modulePackage._initializeModulesKey) {
+      widget.modulePackage._initializeModulesKey = widget.key as GlobalKey;
+    }
+    _firstBuild(context);
+    final mis = List.unmodifiable(widget.modulePackage._allModuleInitializers);
+    var result = widget.child;
+    for (final wrapper in mis) {
       result = _ModuleInitializerWrapper(
           key: ValueKey(wrapper),
           wrapper: wrapper,
-          loading: modulePackage._loadingWidget(loading),
+          loading: widget.modulePackage._loadingWidget(widget.loading),
           child: result);
     }
     return result;
