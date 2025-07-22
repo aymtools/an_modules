@@ -1,7 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
-import 'modules.dart';
+part of 'modules.dart';
 
 class ModulePackage {
   /// 简单快速初始化时 注册这里
@@ -177,6 +174,11 @@ class _ExtModuleAssetBundle extends CachingAssetBundle {
     }
     return _parent.load(key);
   }
+}
+
+class AppInitializer extends ModulesInitializer {
+  AppInitializer({super.key, required super.loading, required super.child})
+      : super(modulePackage: app);
 }
 
 class ModulesInitializer extends StatefulWidget {

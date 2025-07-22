@@ -1,4 +1,9 @@
-import 'package:flutter/widgets.dart';
+import 'dart:collection';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+part 'routes.dart';
 
 /// 路由页面
 typedef MPageBuilder = Widget Function(Object? arguments);
@@ -66,7 +71,27 @@ abstract class Module {
           pageWrapper: pageWrapper,
           routes: routes,
           routeParser: routeParser);
+
+  static void registerModule({required Module module}) {
+    app.registerModule(module);
+  }
+
+  static void registerSubModule(
+      {required String parent, required Module module}) {
+    assert(parent.isNotEmpty, 'Use registerModule');
+    if (parent.isEmpty) app.registerModule(module);
+    final sub = _subModules.putIfAbsent(parent, () => ModulePackage());
+    sub.registerModule(module);
+  }
+
+  static ModulePackage? getSubModule(String parent) {
+    return _subModules[parent];
+  }
 }
+
+final ModulePackage app = ModulePackage();
+
+final Map<String, ModulePackage> _subModules = HashMap();
 
 class _Module implements Module {
   _Module({
