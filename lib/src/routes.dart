@@ -179,6 +179,11 @@ class _ExtModuleAssetBundle extends CachingAssetBundle {
 class AppInitializer extends ModulesInitializer {
   AppInitializer({super.key, required super.loading, required super.child})
       : super(modulePackage: app);
+
+  /// ignore: non_constant_identifier_names
+  static Widget Function(BuildContext, Widget?) Builder(
+          {required Widget initializing}) =>
+      (context, child) => AppInitializer(loading: initializing, child: child!);
 }
 
 class ModulesInitializer extends StatefulWidget {
@@ -195,6 +200,18 @@ class ModulesInitializer extends StatefulWidget {
 
   @override
   State<ModulesInitializer> createState() => _ModulesInitializerState();
+
+  /// ignore: non_constant_identifier_names
+  static Widget Function(BuildContext, Widget?) Builder(
+          {required ModulePackage modulePackage,
+          required Widget initializing}) =>
+      (context, child) => ModulesInitializer(
+          modulePackage: modulePackage, loading: initializing, child: child!);
+
+  /// ignore: non_constant_identifier_names
+  static Widget Function(BuildContext, Widget?) AppBuilder(
+          {required Widget initializing}) =>
+      (context, child) => AppInitializer(loading: initializing, child: child!);
 }
 
 class _ModulesInitializerState extends State<ModulesInitializer> {
