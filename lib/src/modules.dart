@@ -23,6 +23,7 @@ typedef MInitializer = Widget Function(Widget loading, Widget child);
 typedef MSInitializer = void Function(BuildContext context);
 
 /// 路由解析器 返回 [null] 时，表示非当前模块内的路由 当前不关注
+/// 非常小心 注意死循环
 /// [context] 是通过ModulesInitializer获取的 非Navigator 或者 Route 相关的 请勿使用相关功能
 typedef MRouteParser = RouteSettings? Function(
     BuildContext context, RouteSettings settings);

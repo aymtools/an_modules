@@ -45,11 +45,26 @@ class ModulePackage {
       RouteSettings? config;
       if (_allModuleRouteParsers.isNotEmpty) {
         final context = _initializeModulesKey.currentContext!;
-        for (var parser in _allModuleRouteParsers) {
-          config = parser(context, settings);
-          if (config != null) {
-            break;
+
+        RouteSettings? parsing(RouteSettings settings) {
+          RouteSettings? result;
+          for (var parser in _allModuleRouteParsers) {
+            result = parser(context, settings);
+            if (result != null &&
+                (result.name != settings.name ||
+                    result.arguments != settings.arguments ||
+                    result.runtimeType != settings.runtimeType)) {
+              return result;
+            }
           }
+          return null;
+        }
+
+        /// 如果出现了 路由转换 则需要重新执行所有的解析器
+        RouteSettings? tmp = settings;
+        while (tmp != null) {
+          config = tmp;
+          tmp = parsing(tmp);
         }
       }
       config ??= settings;
