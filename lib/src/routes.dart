@@ -196,9 +196,16 @@ class AppInitializer extends ModulesInitializer {
       : super(modulePackage: app);
 
   /// ignore: non_constant_identifier_names
-  static Widget Function(BuildContext, Widget?) Builder(
-          {required Widget initializing}) =>
-      (context, child) => AppInitializer(loading: initializing, child: child!);
+  static Widget Function(BuildContext, Widget?) builder(
+          {required Widget initializing, TransitionBuilder? builder}) =>
+      (context, child) => AppInitializer(
+            loading: initializing,
+            child: builder == null
+                ? child!
+                : Builder(
+                    builder: (context) => builder(context, child),
+                  ),
+          );
 }
 
 class ModulesInitializer extends StatefulWidget {
@@ -217,16 +224,24 @@ class ModulesInitializer extends StatefulWidget {
   State<ModulesInitializer> createState() => _ModulesInitializerState();
 
   /// ignore: non_constant_identifier_names
-  static Widget Function(BuildContext, Widget?) Builder(
+  static Widget Function(BuildContext, Widget?) builder(
           {required ModulePackage modulePackage,
-          required Widget initializing}) =>
+          required Widget initializing,
+          TransitionBuilder? builder}) =>
       (context, child) => ModulesInitializer(
-          modulePackage: modulePackage, loading: initializing, child: child!);
+            modulePackage: modulePackage,
+            loading: initializing,
+            child: builder == null
+                ? child!
+                : Builder(
+                    builder: (context) => builder(context, child),
+                  ),
+          );
 
   /// ignore: non_constant_identifier_names
-  static Widget Function(BuildContext, Widget?) AppBuilder(
-          {required Widget initializing}) =>
-      (context, child) => AppInitializer(loading: initializing, child: child!);
+  static Widget Function(BuildContext, Widget?) builderApp(
+          {required Widget initializing, TransitionBuilder? builder}) =>
+      AppInitializer.builder(initializing: initializing, builder: builder);
 }
 
 class _ModulesInitializerState extends State<ModulesInitializer> {

@@ -78,15 +78,19 @@ abstract class Module {
   }
 
   static void registerSubModule(
-      {required String parent, required Module module}) {
-    assert(parent.isNotEmpty, 'Use registerModule');
-    if (parent.isEmpty) app.registerModule(module);
-    final sub = _subModules.putIfAbsent(parent, () => ModulePackage());
+      {required String subModuleName, required Module module}) {
+    assert(subModuleName.isNotEmpty, 'Use registerModule');
+    if (subModuleName.isEmpty) app.registerModule(module);
+    final sub = _subModules.putIfAbsent(subModuleName, () => ModulePackage());
     sub.registerModule(module);
   }
 
-  static ModulePackage? getSubModule(String parent) {
-    return _subModules[parent];
+  static ModulePackage? getSubModule(String subModuleName) {
+    return _subModules[subModuleName];
+  }
+
+  static bool hasSubModule(String subModuleName) {
+    return _subModules.containsKey(subModuleName);
   }
 }
 
