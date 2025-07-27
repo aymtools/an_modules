@@ -1,5 +1,6 @@
 part of 'modules.dart';
 
+/// 所有的模块组成的一个包管理器
 class ModulePackage {
   /// 简单快速初始化时 注册这里
   final List<MSInitializer> _allModuleSimpleInitializers = [];
@@ -191,10 +192,13 @@ class _ExtModuleAssetBundle extends CachingAssetBundle {
   }
 }
 
+/// App的初始化管理器 用以自动化初始各个的模块配置信息 可能需要异步初始化
 class AppInitializer extends ModulesInitializer {
+  /// [loading] 执行异步初始化时 展示的UI信息
   AppInitializer({super.key, required super.loading, required super.child})
-      : super(modulePackage: app);
+      : super(modulePackage: _app);
 
+  /// 直接用在 AppBuilder的快速函数
   /// ignore: non_constant_identifier_names
   static Widget Function(BuildContext, Widget?) builder(
           {required Widget initializing, TransitionBuilder? builder}) =>
@@ -208,11 +212,14 @@ class AppInitializer extends ModulesInitializer {
           );
 }
 
+/// 模块集成包的初始化管理器
 class ModulesInitializer extends StatefulWidget {
   final ModulePackage modulePackage;
   final Widget loading;
   final Widget child;
 
+  /// [modulePackage] 指定模块配置信息
+  /// [loading] 执行异步初始化时 展示的UI信息
   ModulesInitializer(
       {GlobalKey? key,
       required this.modulePackage,
@@ -223,6 +230,7 @@ class ModulesInitializer extends StatefulWidget {
   @override
   State<ModulesInitializer> createState() => _ModulesInitializerState();
 
+  /// 直接用在 builder的快速函数
   /// ignore: non_constant_identifier_names
   static Widget Function(BuildContext, Widget?) builder(
           {required ModulePackage modulePackage,
@@ -238,6 +246,7 @@ class ModulesInitializer extends StatefulWidget {
                   ),
           );
 
+  /// 直接用在 AppBuilder的快速函数
   /// ignore: non_constant_identifier_names
   static Widget Function(BuildContext, Widget?) builderApp(
           {required Widget initializing, TransitionBuilder? builder}) =>

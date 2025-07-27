@@ -32,7 +32,7 @@ typedef MRouteParser = RouteSettings? Function(
 typedef MPageRouteGenerator<T> = PageRoute<T> Function(
     RouteSettings settings, Widget content);
 
-/// 模块抽象类
+/// Modularization 模块抽象类
 abstract class Module {
   /// 模块名称
   String get name;
@@ -55,6 +55,14 @@ abstract class Module {
   /// 指定当前模块内的路由解析器 仅仅对[routes] 生效
   MRouteParser? get routeParser => null;
 
+  /// 模块的所有信息
+  /// [name] packageName 会自动替换assets
+  /// [pages] 模块内所包含的页面信息
+  /// [pageWrapper] 对模块内的page 增加一个转换器可以统一的注入所需的 内容
+  /// [routes] 模块内所包含的路由信息
+  /// [initializer] 如果模块需要异步化的初始化
+  /// [simpleInitializer] 模块简单的同步化的初始器
+  /// [routeParser] 模块内的路由解析器
   factory Module({
     required String name,
     Map<String, MPageBuilder> pages = const {},
@@ -73,10 +81,12 @@ abstract class Module {
           routes: routes,
           routeParser: routeParser);
 
+  /// 注册一个模块
   static void registerModule({required Module module}) {
     app.registerModule(module);
   }
 
+  /// 注册一个子模块 不会自动合并到 app 中
   static void registerSubModule(
       {required String subModuleName, required Module module}) {
     assert(subModuleName.isNotEmpty, 'Use registerModule');
@@ -85,16 +95,26 @@ abstract class Module {
     sub.registerModule(module);
   }
 
+  /// 获取已注册是子模块的管理包
   static ModulePackage? getSubModule(String subModuleName) {
     return _subModules[subModuleName];
   }
 
+  /// 判断子模块是否已经注册
   static bool hasSubModule(String subModuleName) {
     return _subModules.containsKey(subModuleName);
   }
+
+  /// 获取app的 模块化的配置 内容
+  static ModulePackage get app => _app;
 }
 
-final ModulePackage app = ModulePackage();
+/// app包 全局唯一
+final ModulePackage _app = ModulePackage();
+
+/// 保持旧版兼容 但是由于存在冲突的可能行较大 所以调整为从 [Module.app] 来获取
+@Deprecated('use Module.app')
+ModulePackage get app => _app;
 
 final Map<String, ModulePackage> _subModules = HashMap();
 
