@@ -30,18 +30,22 @@ class ModulePackage {
     _defaultPageRouteGenerator = generator;
   }
 
-// /// 一般使用这个  模块页面生成器
-// Map<String, WidgetBuilder> get generateRouters {
-//   final Map<String, WidgetBuilder> routes = {};
-//   for (final module in _allModulePages.entries) {
-//     routes[module.key] = (_) => Builder(builder: (context) => module.value(ModalRoute.of(context)?.settings.arguments));
-//   }
-//   return routes;
-// }
+  /// 当无法使用[generateRouteFactory]时使用，将会无法自定义路由和路由解析拦截   模块页面生成器
+  Map<String, WidgetBuilder> get generateRouters {
+    _initializeModules();
+    final Map<String, WidgetBuilder> routes = {};
+    for (final module in _allModulePages.entries) {
+      routes[module.key] = (_) => Builder(
+          builder: (context) =>
+              module.value(ModalRoute.of(context)?.settings.arguments));
+    }
+    return routes;
+  }
 
   /// 模块路由生成器
   /// 使用这个时无需使用 [generateRouters] 内部已经包含
   RouteFactory get generateRouteFactory {
+    _initializeModules();
     return (RouteSettings settings) {
       RouteSettings? config;
       if (_allModuleRouteParsers.isNotEmpty) {
@@ -95,8 +99,8 @@ class ModulePackage {
     };
   }
 
-  /// 仅在debug下有意义
-  final Map<String, Module> _allModules = {};
+  /// 已注册的所有模块
+  final List<Module> _allModules = [];
 
   /// 添加一个新的模块
   void registerModule(Module module) {
@@ -107,13 +111,25 @@ class ModulePackage {
       }
 
       /// debug时严格限制 只能添加一次
-      if (_allModules.containsKey(module.name)) {
-        return false;
+      for (final m in _allModules) {
+        if (m.name == module.name) {
+          return false;
+        }
       }
-      _allModules[module.name] = module;
       return true;
     }(), 'Module with name ${module.name} already exists.');
-    module._initialize(this);
+
+    _allModules.add(module);
+  }
+
+  bool _isInitializeModules = false;
+
+  void _initializeModules() {
+    if (_isInitializeModules) return;
+    _isInitializeModules = true;
+    for (var module in [..._allModules]) {
+      module._initialize(this);
+    }
   }
 
   GlobalKey _initializeModulesKey = GlobalKey();
@@ -147,37 +163,74 @@ extension on Module {
     final modulePages = <String, Widget Function(Object? arguments)>{
       for (var page in pages.entries)
         page.key: (arg) {
-          if (name.isEmpty) {
-            /// 一般是指 module 内部页面
-            var pageContent = page.value.call(arg);
-            if (wrapper != null) {
-              pageContent = wrapper(pageContent);
-            }
-            return pageContent;
-          } else {
-            return Builder(builder: (context) {
-              var pageContent = page.value.call(arg);
-              if (wrapper != null) {
-                pageContent = wrapper(pageContent);
-              }
-              return DefaultAssetBundle(
-                bundle:
-                    _ExtModuleAssetBundle(DefaultAssetBundle.of(context), name),
-                child: pageContent,
-              );
-            });
+          /// 一般是指 module 内部页面
+          Widget pageContent = page.value.call(arg);
+          if (wrapper != null) {
+            pageContent = wrapper(pageContent);
           }
+          if (name.isNotEmpty) {
+            pageContent = _ModuleAssetBundleManager(
+              packageName: name,
+              child: pageContent,
+            );
+          }
+          return pageContent;
         },
     };
     package._allModulePages.addAll(modulePages);
   }
 }
 
-class _ExtModuleAssetBundle extends CachingAssetBundle {
+class _ModuleAssetBundleManager extends StatefulWidget {
+  final String packageName;
+  final Widget child;
+
+  const _ModuleAssetBundleManager(
+      {super.key, required this.packageName, required this.child});
+
+  @override
+  State<_ModuleAssetBundleManager> createState() =>
+      _ModuleAssetBundleManagerState();
+}
+
+class _ModuleAssetBundleManagerState extends State<_ModuleAssetBundleManager> {
+  _ModuleAssetBundle? _assetBundle;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ModuleAssetBundleManager oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.packageName != oldWidget.packageName) {
+      _assetBundle = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _assetBundle ??=
+        _ModuleAssetBundle(DefaultAssetBundle.of(context), widget.packageName);
+    return DefaultAssetBundle(
+      bundle: _assetBundle!,
+      child: widget.child,
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _assetBundle?.clear();
+  }
+}
+
+class _ModuleAssetBundle extends AssetBundle {
   final String _package;
   final AssetBundle _parent;
 
-  _ExtModuleAssetBundle(this._parent, this._package);
+  _ModuleAssetBundle(this._parent, this._package);
 
   @override
   Future<ByteData> load(String key) {
@@ -225,7 +278,9 @@ class ModulesInitializer extends StatefulWidget {
       required this.modulePackage,
       required this.loading,
       required this.child})
-      : super(key: key ?? modulePackage._initializeModulesKey);
+      : super(key: key ?? modulePackage._initializeModulesKey) {
+    modulePackage._initializeModules();
+  }
 
   @override
   State<ModulesInitializer> createState() => _ModulesInitializerState();

@@ -4,7 +4,7 @@ import 'package:lib_b/src/pages/counter.dart';
 
 class BModule {
   /// 利用 plugin 自动化注册 模块内容
-  static void registerWith() {
+  static void registerWith([registrar]) {
     Module.registerModule(
       module: Module(
         name: 'lib_b',

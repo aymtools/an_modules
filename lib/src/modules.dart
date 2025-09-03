@@ -86,7 +86,7 @@ abstract class Module {
     app.registerModule(module);
   }
 
-  /// 注册一个子模块 不会自动合并到 app 中
+  /// 注册一个子模块 不会自动合并到 app 中 需要自行管理 sub的处理
   static void registerSubModule(
       {required String subModuleName, required Module module}) {
     assert(subModuleName.isNotEmpty, 'Use registerModule');

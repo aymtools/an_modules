@@ -23,23 +23,22 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
-  flutter:
-    plugin:
-      platforms:
-        android:
-          dartPluginClass: AModule  # 在 Android 中启用当前模块
-        ios:
-          dartPluginClass: AModule  # 在 ios 中启用当前模块
-        web:
-          pluginClass: AModule  # 在 web 中启用当前模块
-          fileName: src/module.dart # 注意与其他的配置不一样
-        windows:
-          dartPluginClass: AModule  # 在 windows 中启用当前模块
-        macos:
-          dartPluginClass: AModule  # 在 macos 中启用当前模块
-        linux:
-          dartPluginClass: AModule  # 在 linux 中启用当前模块
-        fuchsia:
-          dartPluginClass: AModule  # 在 fuchsia 中启用当前模块
+  plugin:
+    platforms:
+      android:
+        dartPluginClass: AModule  # 在 Android 中启用当前模块
+      ios:
+        dartPluginClass: AModule  # 在 ios 中启用当前模块
+      web:
+        pluginClass: AModule  # 在 web 中启用当前模块
+        fileName: src/module.dart # 注意与其他的配置不一样
+      windows:
+        dartPluginClass: AModule  # 在 windows 中启用当前模块
+      macos:
+        dartPluginClass: AModule  # 在 macos 中启用当前模块
+      linux:
+        dartPluginClass: AModule  # 在 linux 中启用当前模块
+      fuchsia:
+        dartPluginClass: AModule  # 在 fuchsia 中启用当前模块
 
   uses-material-design: true

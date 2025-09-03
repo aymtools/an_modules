@@ -30,6 +30,9 @@ flutter:
         dartPluginClass: BModule  # 在 ios 中启用当前模块
       windows:
         dartPluginClass: BModule  # 在 windows 中启用当前模块
+      web:
+        pluginClass: BModule  # 在 web 中启用当前模块
+        fileName: src/module.dart # 注意与其他的配置不一样
     # 在其他的平台中会不存在当前模块
 
   uses-material-design: true
