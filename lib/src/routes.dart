@@ -203,7 +203,7 @@ class _ModuleAssetBundleManager extends StatefulWidget {
   final Widget child;
 
   const _ModuleAssetBundleManager(
-      {super.key, required this.packageName, required this.child});
+      {required this.packageName, required this.child});
 
   @override
   State<_ModuleAssetBundleManager> createState() =>

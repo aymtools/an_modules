@@ -11,10 +11,13 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cancellable: ^2.3.0
-  anlifecycle: ^3.3.0
-  an_lifecycle_cancellable: ^2.4.1
-  an_viewmodel: ^3.3.0
+  cancellable: ^2.4.0
+  anlifecycle: ^3.5.1
+  an_lifecycle_cancellable: ^2.5.2
+  an_viewmodel: ^3.5.1
+  an_dialogs: ^1.3.0
+  an_toast: ^1.1.0
+
 
   an_modules:
     path: ../../../

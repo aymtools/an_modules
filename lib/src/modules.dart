@@ -81,6 +81,7 @@ abstract class Module {
           name: name,
           initializer: initializer,
           simpleInitializer: simpleInitializer,
+          onceInitializer: onceInitializer,
           pages: pages,
           pageWrapper: pageWrapper,
           routes: routes,
@@ -143,6 +144,7 @@ class _Module implements Module {
 
   @override
   final MSInitializer? simpleInitializer;
+
   @override
   final MSInitializer? onceInitializer;
 
