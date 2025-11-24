@@ -1,3 +1,7 @@
+## 1.1.0
+
+* Delay the initialization timing.
+
 ## 1.0.1
 
 * Optimize code.

@@ -52,6 +52,9 @@ abstract class Module {
   /// 模块初始化器 简易版
   MSInitializer? get simpleInitializer;
 
+  /// 模块初始化器  只会调用一次
+  MSInitializer? get onceInitializer;
+
   /// 指定当前模块内的路由解析器 仅仅对[routes] 生效
   MRouteParser? get routeParser => null;
 
@@ -62,6 +65,7 @@ abstract class Module {
   /// [routes] 模块内所包含的路由信息
   /// [initializer] 如果模块需要异步化的初始化
   /// [simpleInitializer] 模块简单的同步化的初始器
+  /// [onceInitializer] 整个app内只会调用一次从初始化器
   /// [routeParser] 模块内的路由解析器
   factory Module({
     required String name,
@@ -70,6 +74,7 @@ abstract class Module {
     Map<String, MPageRouteBuilder> routes = const {},
     MInitializer? initializer,
     MSInitializer? simpleInitializer,
+    MSInitializer? onceInitializer,
     MRouteParser? routeParser,
   }) =>
       _Module(
@@ -123,6 +128,7 @@ class _Module implements Module {
     required this.name,
     this.initializer,
     this.simpleInitializer,
+    this.onceInitializer,
     this.pages = const {},
     this.pageWrapper,
     this.routes = const {},
@@ -137,6 +143,8 @@ class _Module implements Module {
 
   @override
   final MSInitializer? simpleInitializer;
+  @override
+  final MSInitializer? onceInitializer;
 
   @override
   final Map<String, MPageBuilder> pages;

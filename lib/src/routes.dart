@@ -5,6 +5,9 @@ class ModulePackage {
   /// 简单快速初始化时 注册这里
   final List<MSInitializer> _allModuleSimpleInitializers = [];
 
+  /// 单次初始化 注册这里
+  final List<MSInitializer> _allModuleOnceInitializers = [];
+
   /// 当模块需要自定义全局初始化时注册这里
   final List<MInitializer> _allModuleInitializers = [];
 
@@ -142,10 +145,24 @@ class ModulePackage {
         _ModuleInitializerLoading(modulePackage: this, child: loading);
     return _moduleInitializerLoading!;
   }
+
+  bool _onceInitialized = false;
+
+  void _callOnceInitializer(BuildContext context) {
+    if (_onceInitialized) return;
+    _onceInitialized = true;
+    final mis = List.unmodifiable(_allModuleOnceInitializers);
+    for (final i in mis) {
+      i.call(context);
+    }
+  }
 }
 
 extension on Module {
   void _initialize(ModulePackage package) {
+    if (onceInitializer != null) {
+      package._allModuleOnceInitializers.add(onceInitializer!);
+    }
     if (simpleInitializer != null) {
       package._allModuleSimpleInitializers.add(simpleInitializer!);
     }
@@ -314,6 +331,8 @@ class _ModulesInitializerState extends State<ModulesInitializer> {
   void _firstBuild(BuildContext context) {
     if (_isNotFirst) return;
     _isNotFirst = true;
+
+    widget.modulePackage._callOnceInitializer(context);
 
     final msis =
         List.unmodifiable(widget.modulePackage._allModuleSimpleInitializers);

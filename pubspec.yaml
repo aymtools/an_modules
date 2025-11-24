@@ -1,6 +1,6 @@
 name: an_modules
 description: "A toolkit in Flutter that is modularized according to business functionality, providing modular registration and other features."
-version: 1.0.1
+version: 1.1.0
 homepage: https://github.com/aymtools/an_modules/
 issue_tracker: https://github.com/aymtools/an_modules/issues
 
