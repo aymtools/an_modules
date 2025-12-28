@@ -260,6 +260,12 @@ class _ModuleAssetBundle extends AssetBundle {
     }
     return _parent.load(key);
   }
+
+  @override
+  Future<T> loadStructuredData<T>(
+      String key, Future<T> Function(String value) parser) async {
+    return parser(await loadString(key));
+  }
 }
 
 /// App的初始化管理器 用以自动化初始各个的模块配置信息 可能需要异步初始化
