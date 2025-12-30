@@ -52,7 +52,7 @@ jobs:
       - name: Extract minimum Flutter version
         id: min_flutter
         run: |
-          LINE=$(grep -E 'flutter:\s*">=' pubspec.yaml | head -n 1)
+          LINE=$(grep -E "flutter:\s*'>=" pubspec.yaml | head -n 1)
 
           if [ -z "$LINE" ]; then
             echo "::error::Missing environment:flutter constraint"
