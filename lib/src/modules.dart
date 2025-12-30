@@ -1,9 +1,11 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+part 'container.dart';
+part 'container_inner.dart';
+part 'modular.dart';
 part 'routes.dart';
+part 'widgets.dart';
 
 /// 路由页面
 typedef MPageBuilder = Widget Function(Object? arguments);
@@ -37,6 +39,12 @@ abstract class Module {
   /// 模块名称
   String get name;
 
+  /// 必须依赖
+  List<String> get requiredDependencies => [];
+
+  /// 可选依赖
+  List<String> get optionalDependencies => [];
+
   /// 模块所有页面
   Map<String, MPageBuilder> get pages;
 
@@ -59,19 +67,23 @@ abstract class Module {
   MRouteParser? get routeParser => null;
 
   /// 模块的所有信息
-  /// [name] packageName 会自动替换assets
-  /// [pages] 模块内所包含的页面信息
-  /// [pageWrapper] 对模块内的page 增加一个转换器可以统一的注入所需的 内容
-  /// [routes] 模块内所包含的路由信息
-  /// [initializer] 如果模块需要异步化的初始化
-  /// [simpleInitializer] 模块简单的同步化的初始器
-  /// [onceInitializer] 整个app内只会调用一次从初始化器
-  /// [routeParser] 模块内的路由解析器
+  /// - [name] packageName 会自动替换assets
+  /// - [requiredDependencies] 必须依赖的模块
+  /// - [optionalDependencies] 可选依赖的模块
+  /// - [pages] 模块内所包含的页面信息
+  /// - [pageWrapper] 对模块内的page 增加一个转换器可以统一的注入所需的 内容
+  /// - [routes] 模块内所包含的路由信息
+  /// - [initializer] 如果模块需要异步化的初始化
+  /// - [simpleInitializer] 模块简单的同步化的初始器
+  /// - [onceInitializer] 整个app内只会调用一次从初始化器
+  /// - [routeParser] 模块内的路由解析器
   factory Module({
     required String name,
-    Map<String, MPageBuilder> pages = const {},
+    List<String>? requiredDependencies,
+    List<String>? optionalDependencies,
+    Map<String, MPageBuilder>? pages,
     MPageWrapper? pageWrapper,
-    Map<String, MPageRouteBuilder> routes = const {},
+    Map<String, MPageRouteBuilder>? routes,
     MInitializer? initializer,
     MSInitializer? simpleInitializer,
     MSInitializer? onceInitializer,
@@ -79,6 +91,8 @@ abstract class Module {
   }) =>
       _Module(
           name: name,
+          requiredDependencies: requiredDependencies,
+          optionalDependencies: optionalDependencies,
           initializer: initializer,
           simpleInitializer: simpleInitializer,
           onceInitializer: onceInitializer,
@@ -88,75 +102,44 @@ abstract class Module {
           routeParser: routeParser);
 
   /// 注册一个模块
-  static void registerModule({required Module module}) {
-    app.registerModule(module);
+  static void registerModule({required Module module, String? containerId}) {
+    ModuleContainer._getOrCreate(containerId ?? kAppContainerId)
+        .register(module);
   }
 
   /// 注册一个子模块 不会自动合并到 app 中 需要自行管理 sub的处理
+  /// 已过时，使用 [registerModule] 指定 [containerId]
+  @Deprecated('use registerModule')
   static void registerSubModule(
       {required String subModuleName, required Module module}) {
     assert(subModuleName.isNotEmpty, 'Use registerModule');
-    if (subModuleName.isEmpty) app.registerModule(module);
-    final sub = _subModules.putIfAbsent(subModuleName, () => ModulePackage());
-    sub.registerModule(module);
+    ModuleContainer._getOrCreate(subModuleName).register(module);
   }
 
   /// 获取已注册是子模块的管理包
-  static ModulePackage? getSubModule(String subModuleName) {
-    return _subModules[subModuleName];
+  @Deprecated('use getModuleContainer')
+  static ModuleContainer? getSubModule(String subModuleName) =>
+      getModuleContainer(subModuleName);
+
+  /// 获取已注册是子模块的管理包
+  static ModuleContainer? getModuleContainer(String containerId) {
+    return ModuleContainer._getOrNull(containerId);
   }
 
   /// 判断子模块是否已经注册
-  static bool hasSubModule(String subModuleName) {
-    return _subModules.containsKey(subModuleName);
+  @Deprecated('use hasModuleContainer')
+  static bool hasSubModule(String subModuleName) =>
+      hasModuleContainer(subModuleName);
+
+  /// 判断子模块是否已经注册
+  static bool hasModuleContainer(String containerId) {
+    return ModuleContainer._hasContainer(containerId);
   }
 
   /// 获取app的 模块化的配置 内容
-  static ModulePackage get app => _app;
+  static ModuleContainer get app => _app;
 }
-
-/// app包 全局唯一
-final ModulePackage _app = ModulePackage();
 
 /// 保持旧版兼容 但是由于存在冲突的可能行较大 所以调整为从 [Module.app] 来获取
 @Deprecated('use Module.app')
-ModulePackage get app => _app;
-
-final Map<String, ModulePackage> _subModules = HashMap();
-
-class _Module implements Module {
-  _Module({
-    required this.name,
-    this.initializer,
-    this.simpleInitializer,
-    this.onceInitializer,
-    this.pages = const {},
-    this.pageWrapper,
-    this.routes = const {},
-    this.routeParser,
-  });
-
-  @override
-  final String name;
-
-  @override
-  final MInitializer? initializer;
-
-  @override
-  final MSInitializer? simpleInitializer;
-
-  @override
-  final MSInitializer? onceInitializer;
-
-  @override
-  final Map<String, MPageBuilder> pages;
-
-  @override
-  final MPageWrapper? pageWrapper;
-
-  @override
-  final Map<String, MPageRouteBuilder> routes;
-
-  @override
-  final MRouteParser? routeParser;
-}
+ModuleContainer get app => _app;

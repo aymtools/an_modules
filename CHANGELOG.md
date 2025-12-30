@@ -1,3 +1,7 @@
+## 1.2.0
+
+* Allow specifying inter-module dependencies
+
 ## 1.1.0
 
 * Delay the initialization timing.

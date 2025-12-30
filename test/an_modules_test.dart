@@ -1,12 +1,42 @@
+import 'package:an_modules/an_modules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:an_modules/an_modules.dart';
-
 void main() {
-  // test('adds one to input values', () {
-  //   final calculator = Calculator();
-  //   expect(calculator.addOne(2), 3);
-  //   expect(calculator.addOne(-7), -6);
-  //   expect(calculator.addOne(0), 1);
-  // });
+  test('tt', () {
+    // App 容器（root）
+    final app = Module.app;
+
+    app.register(Module(name: 'network'));
+    Module.registerModule(
+      module: Module(name: 'logger'),
+    );
+
+    Module.registerModule(
+      containerId: 'feature',
+      module: Module(
+        name: 'auth',
+        requiredDependencies: ['network'],
+      ),
+    );
+
+    Module.registerModule(
+      containerId: 'feature',
+      module: Module(
+        name: 'analytics',
+        optionalDependencies: ['network'],
+      ),
+    );
+
+    Module.registerModule(
+      containerId: 'feature',
+      module: Module(
+        name: 'user',
+        requiredDependencies: ['auth'],
+        optionalDependencies: ['analytics'],
+      ),
+    );
+
+    final modules = app.generateRouters;
+    expect(app.hasModule('logger'), isTrue);
+  });
 }

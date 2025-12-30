@@ -18,7 +18,7 @@ Future<void> startApp() async {
   ///初始化你的功能 例如初始化 sp
   final sp = await SharedPreferences.getInstance();
 
-  /// 我一般选择将sp 注入到全局的 LifecycleAppOwner 中 后续就无须进行异步获取
+  /// 一般选择将sp 注入到全局的 LifecycleAppOwner 中 后续就无须进行异步获取
   launchWithAppOwner((owner) => owner.extData.putIfAbsent(ifAbsent: () => sp));
 
   /// 正常启动App
