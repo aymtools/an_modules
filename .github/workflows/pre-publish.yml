@@ -79,9 +79,6 @@ jobs:
       - name: Analyze (min Flutter)
         run: flutter analyze --fatal-infos --fatal-warnings
 
-      - name: Publish dry-run (min Flutter)
-        run: flutter pub publish --dry-run
-
       # ---------------------------------
       # 5 Stable Flutter：规范校验
       # ---------------------------------
@@ -102,3 +99,6 @@ jobs:
       # ---------------------------------
       - name: Flutter test
         run: flutter test
+
+      - name: Publish dry-run
+        run: flutter pub publish --dry-run

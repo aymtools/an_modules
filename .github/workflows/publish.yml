@@ -119,8 +119,6 @@ jobs:
       - name: Analyze (min Flutter)
         run: flutter analyze --fatal-infos --fatal-warnings
 
-      - name: Publish dry-run (min Flutter)
-        run: flutter pub publish --dry-run
 
       # ---------------------------------
       # 7 Stable Flutter：format 校验
@@ -147,4 +145,4 @@ jobs:
       # 9 正式发布（无 token）
       # ---------------------------------
       - name: Publish to pub.dev
-        run: flutter pub publish --force
+        run: flutter pub publish
