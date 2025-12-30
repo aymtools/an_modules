@@ -1,10 +1,6 @@
 part of 'modules.dart';
 
-class _ModuleContainerInner {
-  final ModuleContainer container;
-
-  _ModuleContainerInner({required this.container});
-
+mixin _ModuleContainerInitializers on _ModuleContainerManager {
   MPageRouteGenerator<dynamic> _defaultPageRouteGenerator =
       (RouteSettings settings, Widget content) {
     return MaterialPageRoute(
@@ -14,6 +10,7 @@ class _ModuleContainerInner {
   };
 
   ///  设置默认的路由生成器
+  @override
   set pageRouteGenerator(MPageRouteGenerator generator) {
     _defaultPageRouteGenerator = generator;
   }
@@ -36,19 +33,21 @@ class _ModuleContainerInner {
   /// 所有的模块的路由生成器
   final Map<String, MPageRouteBuilder> _allModuleRoutes = {};
 
+  @override
   bool _isInitialized = false;
 
   void _initialize() {
     if (_isInitialized) return;
     _isInitialized = true;
 
-    final modules = container._sortModules();
+    final modules = _sortModules();
     for (final module in modules) {
       module._initialize(this);
     }
   }
 
   /// 当无法使用[generateRouteFactory]时使用，将会无法自定义路由和路由解析拦截   模块页面生成器
+  @override
   Map<String, WidgetBuilder> get generateRouters {
     _initialize();
     final Map<String, WidgetBuilder> routes = {};
@@ -62,6 +61,7 @@ class _ModuleContainerInner {
 
   /// 模块路由生成器
   /// 使用这个时无需使用 [generateRouters] 内部已经包含
+  @override
   RouteFactory get generateRouteFactory {
     _initialize();
     return (RouteSettings settings) {
@@ -125,7 +125,7 @@ class _ModuleContainerInner {
 
   Widget _loadingWidget(Widget loading) {
     _moduleInitializerLoading ??=
-        _ModuleInitializerLoading(moduleContainer: container, child: loading);
+        _ModuleInitializerLoading(moduleContainer: this, child: loading);
     return _moduleInitializerLoading!;
   }
 
@@ -142,22 +142,22 @@ class _ModuleContainerInner {
 }
 
 extension on Module {
-  void _initialize(_ModuleContainerInner inner) {
+  void _initialize(_ModuleContainerInitializers container) {
     if (onceInitializer != null) {
-      inner._allModuleOnceInitializers.add(onceInitializer!);
+      container._allModuleOnceInitializers.add(onceInitializer!);
     }
     if (simpleInitializer != null) {
-      inner._allModuleSimpleInitializers.add(simpleInitializer!);
+      container._allModuleSimpleInitializers.add(simpleInitializer!);
     }
     if (initializer != null) {
-      inner._allModuleInitializers.add(initializer!);
+      container._allModuleInitializers.add(initializer!);
     }
 
     if (routeParser != null) {
-      inner._allModuleRouteParsers.add(routeParser!);
+      container._allModuleRouteParsers.add(routeParser!);
     }
 
-    inner._allModuleRoutes.addAll(routes);
+    container._allModuleRoutes.addAll(routes);
 
     final wrapper = pageWrapper;
     final modulePages = <String, Widget Function(Object? arguments)>{
@@ -177,6 +177,6 @@ extension on Module {
           return pageContent;
         },
     };
-    inner._allModulePages.addAll(modulePages);
+    container._allModulePages.addAll(modulePages);
   }
 }

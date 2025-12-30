@@ -35,8 +35,7 @@ void main() {
         optionalDependencies: ['analytics'],
       ),
     );
-
-    final modules = app.generateRouters;
+    app.generateRouters;
     expect(app.hasModule('logger'), isTrue);
   });
 }

@@ -7,6 +7,10 @@ on:
       - 'v*.*.*'
       - 'v*.*.*-*.*'
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   publish:
     uses: aymtools/flutter-ci/.github/workflows/publish.yml@main

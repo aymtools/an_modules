@@ -90,11 +90,14 @@ class AppInitializer extends ModulesInitializer {
           );
 }
 
-ModuleContainer _container(
+_ModuleContainer _container(
   ModuleContainer? modulePackage,
   ModuleContainer? moduleContainer,
 ) {
-  return modulePackage ?? moduleContainer!;
+  if (modulePackage != null && modulePackage is _ModuleContainer) {
+    return modulePackage;
+  }
+  return moduleContainer as _ModuleContainer;
 }
 
 /// 模块集成包的初始化管理器
@@ -116,9 +119,8 @@ class ModulesInitializer extends StatefulWidget {
         super(
             key: key ??
                 _container(modulePackage, moduleContainer)
-                    ._inner
                     ._initializeModulesKey) {
-    this.moduleContainer._inner._initialize();
+    (this.moduleContainer as _ModuleContainer)._initialize();
   }
 
   @override
@@ -151,15 +153,15 @@ class ModulesInitializer extends StatefulWidget {
 class _ModulesInitializerState extends State<ModulesInitializer> {
   bool _isNotFirst = false;
 
-  _ModuleContainerInner get _inner => widget.moduleContainer._inner;
+  _ModuleContainer get _container => widget.moduleContainer as _ModuleContainer;
 
   void _firstBuild(BuildContext context) {
     if (_isNotFirst) return;
     _isNotFirst = true;
 
-    _inner._callOnceInitializer(context);
+    _container._callOnceInitializer(context);
 
-    final msis = List.unmodifiable(_inner._allModuleSimpleInitializers);
+    final msis = List.unmodifiable(_container._allModuleSimpleInitializers);
     for (final i in msis) {
       final Object? debugCheckForReturnedFuture = i.call(context) as dynamic;
 
@@ -178,12 +180,12 @@ class _ModulesInitializerState extends State<ModulesInitializer> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.key != _inner._initializeModulesKey) {
-      _inner._initializeModulesKey = widget.key as GlobalKey;
+    if (widget.key != _container._initializeModulesKey) {
+      _container._initializeModulesKey = widget.key as GlobalKey;
     }
     _firstBuild(context);
-    final mis = List.unmodifiable(_inner._allModuleInitializers.reversed);
-    final loading = _inner._loadingWidget(widget.loading);
+    final mis = List.unmodifiable(_container._allModuleInitializers.reversed);
+    final loading = _container._loadingWidget(widget.loading);
     var result = widget.child;
     for (final wrapper in mis) {
       result = _ModuleInitializerWrapper(
@@ -215,12 +217,12 @@ class _ModuleInitializerWrapper extends StatelessWidget {
 }
 
 class _ModuleInitializerLoading extends StatelessWidget {
-  final ModuleContainer moduleContainer;
+  final _ModuleContainerInitializers moduleContainer;
   final Widget child;
 
   _ModuleInitializerLoading(
       {required this.moduleContainer, required this.child})
-      : super(key: moduleContainer._inner._initializeLoadingKey);
+      : super(key: moduleContainer._initializeLoadingKey);
 
   @override
   Widget build(BuildContext context) {

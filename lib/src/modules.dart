@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 part 'container.dart';
-part 'container_inner.dart';
+part 'container_initializer.dart';
+part 'container_manager.dart';
 part 'modular.dart';
 part 'routes.dart';
 part 'widgets.dart';
@@ -102,9 +103,9 @@ abstract class Module {
           routeParser: routeParser);
 
   /// 注册一个模块
-  static void registerModule({required Module module, String? containerId}) {
-    ModuleContainer._getOrCreate(containerId ?? kAppContainerId)
-        .register(module);
+  static void registerModule(
+      {required Module module, String containerId = kAppContainerId}) {
+    _ModuleContainer._getOrCreate(containerId).register(module);
   }
 
   /// 注册一个子模块 不会自动合并到 app 中 需要自行管理 sub的处理
@@ -113,7 +114,7 @@ abstract class Module {
   static void registerSubModule(
       {required String subModuleName, required Module module}) {
     assert(subModuleName.isNotEmpty, 'Use registerModule');
-    ModuleContainer._getOrCreate(subModuleName).register(module);
+    registerModule(module: module, containerId: subModuleName);
   }
 
   /// 获取已注册是子模块的管理包
@@ -123,7 +124,7 @@ abstract class Module {
 
   /// 获取已注册是子模块的管理包
   static ModuleContainer? getModuleContainer(String containerId) {
-    return ModuleContainer._getOrNull(containerId);
+    return _ModuleContainer._getOrNull(containerId);
   }
 
   /// 判断子模块是否已经注册
@@ -133,7 +134,7 @@ abstract class Module {
 
   /// 判断子模块是否已经注册
   static bool hasModuleContainer(String containerId) {
-    return ModuleContainer._hasContainer(containerId);
+    return _ModuleContainer._hasContainer(containerId);
   }
 
   /// 获取app的 模块化的配置 内容
@@ -143,3 +144,32 @@ abstract class Module {
 /// 保持旧版兼容 但是由于存在冲突的可能行较大 所以调整为从 [Module.app] 来获取
 @Deprecated('use Module.app')
 ModuleContainer get app => _app;
+
+/// App（根）ModuleContainer 的 id
+const String kAppContainerId = "";
+
+/// 记录和管理模块合集
+abstract class ModuleContainer {
+  String get id;
+
+  void register(Module module);
+
+  /// 是否存在 module
+  bool hasModule(String moduleName);
+
+  ///  设置默认的路由生成器
+  set pageRouteGenerator(MPageRouteGenerator generator);
+
+  /// 当无法使用[generateRouteFactory]时使用，将会无法自定义路由和路由解析拦截   模块页面生成器
+  Map<String, WidgetBuilder> get generateRouters;
+
+  /// 模块路由生成器
+  /// 使用这个时无需使用 [generateRouters] 内部已经包含
+  RouteFactory get generateRouteFactory;
+
+  ModuleContainer._();
+
+  @Deprecated('will remove')
+  factory ModuleContainer({String id = kAppContainerId}) =>
+      _ModuleContainer._(id: id);
+}
