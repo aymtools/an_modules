@@ -4,19 +4,146 @@ name: Publish to pub.dev
 on:
   push:
     tags:
-      # must align with the tag-pattern configured on pub.dev, often just replace
-      # {{version}} with [0-9]+.[0-9]+.[0-9]+
-      - 'v[0-9]+.[0-9]+.[0-9]+' # tag-pattern on pub.dev: 'v{{version}}'
-    # If you prefer tags like '1.2.3', without the 'v' prefix, then use:
-    # - '[0-9]+.[0-9]+.[0-9]+' # tag-pattern on pub.dev: '{{version}}'
-    # If your repository contains multiple packages consider a pattern like:
-    # - 'my_package_name-v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
-# Publish using the reusable workflow from dart-lang.
 jobs:
   publish:
-    permissions:
-      id-token: write # Required for authentication using OIDC
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
-    # with:
-    #   working-directory: path/to/package/within/repository
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---------------------------------
+      # 0 Checkout（必须 fetch 全量历史）
+      # ---------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ---------------------------------
+      # 1 tag 格式校验（只允许正式版）
+      # ---------------------------------
+      - name: Validate release tag format
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release tag: $TAG"
+            exit 1
+          fi
+
+      # ---------------------------------
+      # 2 校验 tag 必须来自 main
+      # ---------------------------------
+      - name: Validate tag is from main branch
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+
+          git fetch origin main
+
+          TAG_COMMIT=$(git rev-list -n 1 "$TAG")
+
+          echo "Tag:        $TAG"
+          echo "Tag commit: $TAG_COMMIT"
+
+          if git merge-base --is-ancestor "$TAG_COMMIT" origin/main; then
+            echo "✅ Tag is on main branch"
+          else
+            echo "::error::Release tag must be created from main branch"
+            exit 1
+          fi
+
+      # ---------------------------------
+      # 3 pubspec ↔ tag 版本强校验
+      # ---------------------------------
+      - name: Validate pubspec version matches tag
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+
+          echo "Tag version:     $TAG_VERSION"
+          echo "Pubspec version: $PUBSPEC_VERSION"
+
+          if [ "$TAG_VERSION" != "$PUBSPEC_VERSION" ]; then
+            echo "::error::pubspec.yaml version does not match tag"
+            exit 1
+          fi
+
+      # ---------------------------------
+      # 4 CHANGELOG 校验（必须包含版本）
+      # ---------------------------------
+      - name: Validate CHANGELOG
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+
+          if [ ! -f CHANGELOG.md ]; then
+            echo "::error::CHANGELOG.md not found"
+            exit 1
+          fi
+
+          if ! grep -q "$VERSION" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md does not contain version $VERSION"
+            exit 1
+          fi
+
+      # ---------------------------------
+      # 5 解析最低 Flutter SDK 版本
+      # ---------------------------------
+      - name: Extract minimum Flutter version
+        id: min_flutter
+        run: |
+          LINE=$(grep -E 'flutter:\s*">=' pubspec.yaml | head -n 1)
+
+          if [ -z "$LINE" ]; then
+            echo "::error::Missing environment:flutter constraint"
+            exit 1
+          fi
+
+          MIN=$(echo "$LINE" | sed -E 's/.*>=([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "version=$MIN" >> $GITHUB_OUTPUT
+          echo "Minimum Flutter: $MIN"
+
+      # ---------------------------------
+      # 6 最低 Flutter：兼容性校验
+      # ---------------------------------
+      - name: Setup Flutter (minimum)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.min_flutter.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Pub get (min Flutter)
+        run: flutter pub get
+
+      - name: Analyze (min Flutter)
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Publish dry-run (min Flutter)
+        run: flutter pub publish --dry-run
+
+      # ---------------------------------
+      # 7 Stable Flutter：format 校验
+      # ---------------------------------
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Pub get (stable)
+        run: flutter pub get
+
+      - name: Dart format check (lib/)
+        run: dart format --output=none --set-exit-if-changed lib
+
+      # ---------------------------------
+      # 8 执行 test
+      # ---------------------------------
+      - name: Flutter test
+        run: flutter test
+
+      # ---------------------------------
+      # 9 正式发布（无 token）
+      # ---------------------------------
+      - name: Publish to pub.dev
+        run: flutter pub publish --force
