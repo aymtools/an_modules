@@ -121,7 +121,7 @@ jobs:
 
 
       # ---------------------------------
-      # 7 Stable Flutter：format 校验
+      # 7 Stable Flutter： 校验
       # ---------------------------------
       - name: Setup Flutter (stable)
         uses: subosito/flutter-action@v2
@@ -132,6 +132,17 @@ jobs:
       - name: Pub get (stable)
         run: flutter pub get
 
+      # 检查依赖没有path和git
+      - name: Validate dependencies (no git/path)
+        run: |
+          flutter pub deps --json > deps.json
+          if jq -e '.packages[] | select(.source=="git" or .source=="path")' deps.json > /dev/null; then
+            echo "::error::Found git/path dependencies"
+            jq -r '.packages[] | select(.source=="git" or .source=="path") | "- \(.name) (\(.source))"' deps.json
+            exit 1
+          fi
+
+      # format 校验
       - name: Dart format check (lib/)
         run: dart format --output=none --set-exit-if-changed lib
 
@@ -142,7 +153,13 @@ jobs:
         run: flutter test
 
       # ---------------------------------
-      # 9 正式发布（无 token）
+      # 9 发布检查
+      # ---------------------------------
+      - name: Publish dry-run
+        run: flutter pub publish --dry-run
+
+      # ---------------------------------
+      # 10 正式发布（无 token）
       # ---------------------------------
       - name: Publish to pub.dev
         run: flutter pub publish

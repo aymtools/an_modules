@@ -77,7 +77,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze (min Flutter)
-        run: flutter analyze --fatal-infos --fatal-warnings
+        run: flutter analyze  --fatal-infos --fatal-warnings
 
       # ---------------------------------
       # 5 Stable Flutter：规范校验
@@ -91,6 +91,15 @@ jobs:
       - name: Pub get (stable)
         run: flutter pub get
 
+      - name: Validate dependencies (no git/path)
+        run: |
+          flutter pub deps --json > deps.json
+          if jq -e '.packages[] | select(.source=="git" or .source=="path")' deps.json > /dev/null; then
+            echo "::error::Found git/path dependencies"
+            jq -r '.packages[] | select(.source=="git" or .source=="path") | "- \(.name) (\(.source))"' deps.json
+            exit 1
+          fi
+
       - name: Dart format check (lib/, stable)
         run: dart format --output=none --set-exit-if-changed lib
 
@@ -99,6 +108,3 @@ jobs:
       # ---------------------------------
       - name: Flutter test
         run: flutter test
-
-      - name: Publish dry-run
-        run: flutter pub publish --dry-run
