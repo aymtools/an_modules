@@ -13,4 +13,4 @@ permissions:
 
 jobs:
   publish:
-    uses: aymtools/flutter-ci/.github/workflows/publish.yml@main
+    uses: aymtools/flutter-ci/.github/workflows/flutter-publish.yml@main
