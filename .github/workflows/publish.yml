@@ -9,4 +9,4 @@ on:
 
 jobs:
   publish:
-    uses: aymtools/futter-ci/.github/workflows/publish.yml@main
+    uses: aymtools/flutter-ci/.github/workflows/publish.yml@main
