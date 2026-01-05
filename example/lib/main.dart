@@ -22,7 +22,7 @@ Future<void> startApp() async {
   launchWithAppOwner((owner) => owner.extData.putIfAbsent(ifAbsent: () => sp));
 
   /// 正常启动App
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
         // 路由生成器交给 modules 管理
         onGenerateRoute: Module.app.generateRouteFactory,
         // modules的初始化处理
-        builder: AppInitializer.builder(initializing: AppInitializing()),
+        builder: AppInitializer.builder(initializing: const AppInitializing()),
       ),
     );
   }
