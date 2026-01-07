@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 part 'container.dart';
+part 'container_base.dart';
 part 'container_initializer.dart';
-part 'container_manager.dart';
+part 'container_module_initializer.dart';
+part 'container_routes.dart';
+part 'container_sorted.dart';
 part 'modular.dart';
 part 'routes.dart';
 part 'widgets.dart';
@@ -67,6 +72,11 @@ abstract class Module {
   /// 指定当前模块内的路由解析器 仅仅对[routes] 生效
   MRouteParser? get routeParser => null;
 
+  MIInitializerExecutor? get initializerExecutor;
+
+  /// 未设置时为忽略错误 继续初始化
+  MIInitializerErrorBuilder? get initializerErrorBuilder;
+
   /// 模块的所有信息
   /// - [name] packageName 会自动替换assets
   /// - [requiredDependencies] 必须依赖的模块
@@ -74,10 +84,14 @@ abstract class Module {
   /// - [pages] 模块内所包含的页面信息
   /// - [pageWrapper] 对模块内的page 增加一个转换器可以统一的注入所需的 内容
   /// - [routes] 模块内所包含的路由信息
-  /// - [initializer] 如果模块需要异步化的初始化
-  /// - [simpleInitializer] 模块简单的同步化的初始器
-  /// - [onceInitializer] 整个app内只会调用一次从初始化器
+  /// - [initializer] **已过时** 如果模块需要异步化的初始化 会串行执行
+  /// - [simpleInitializer] **已过时** 模块简单的同步化的初始器
+  /// - [onceInitializer] **已过时** 整个app内只会调用一次从初始化器
   /// - [routeParser] 模块内的路由解析器
+  /// - [initializerExecutor] 模块初始化器，提供一个[FutureOr&lt;void>],
+  /// 如果设置了 [initializerErrorBuilder] 的重试，则要允许重试执行。
+  /// 如果没有依赖则并行future 如果存在依赖，按照依赖串行执行
+  /// - [initializerErrorBuilder] 初始化失败时如何处理
   factory Module({
     required String name,
     List<String>? requiredDependencies,
@@ -85,10 +99,14 @@ abstract class Module {
     Map<String, MPageBuilder>? pages,
     MPageWrapper? pageWrapper,
     Map<String, MPageRouteBuilder>? routes,
-    MInitializer? initializer,
+    @Deprecated('use initializerExecutor, v1.2.0') MInitializer? initializer,
+    @Deprecated('use initializerExecutor, v1.2.0')
     MSInitializer? simpleInitializer,
+    @Deprecated('use initializerExecutor, v1.2.0')
     MSInitializer? onceInitializer,
     MRouteParser? routeParser,
+    MIInitializerExecutor? initializerExecutor,
+    MIInitializerErrorBuilder? initializerErrorBuilder,
   }) =>
       _Module(
           name: name,
@@ -100,7 +118,9 @@ abstract class Module {
           pages: pages,
           pageWrapper: pageWrapper,
           routes: routes,
-          routeParser: routeParser);
+          routeParser: routeParser,
+          initializerExecutor: initializerExecutor,
+          initializerErrorBuilder: initializerErrorBuilder);
 
   /// 注册一个模块
   static void registerModule(

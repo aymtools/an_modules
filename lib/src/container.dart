@@ -7,7 +7,12 @@ final _ModuleContainer _app = _ModuleContainer._(id: kAppContainerId);
 // ModuleContainer definition
 // =========================
 class _ModuleContainer extends ModuleContainer
-    with _ModuleContainerManager, _ModuleContainerInitializers {
+    with
+        _ModuleContainerBase,
+        _ModuleContainerRoutes,
+        _ModuleContainerSorted,
+        _ModuleContainerMInitializers,
+        _ModuleContainerInitializers {
   /// 当前容器唯一标识
   @override
   final String id;

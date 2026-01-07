@@ -12,6 +12,8 @@ class _Module implements Module {
     this.pageWrapper,
     Map<String, MPageRouteBuilder>? routes,
     this.routeParser,
+    MIInitializerExecutor? initializerExecutor,
+    this.initializerErrorBuilder,
   })  : requiredDependencies = requiredDependencies == null
             ? const []
             : List.unmodifiable(requiredDependencies),
@@ -19,7 +21,8 @@ class _Module implements Module {
             ? const []
             : List.unmodifiable(optionalDependencies),
         pages = pages == null ? const {} : Map.unmodifiable(pages),
-        routes = routes == null ? const {} : Map.unmodifiable(routes);
+        routes = routes == null ? const {} : Map.unmodifiable(routes),
+        _initializerExecutor = initializerExecutor;
 
   @override
   final String name;
@@ -49,4 +52,34 @@ class _Module implements Module {
 
   @override
   final MRouteParser? routeParser;
+
+  final MIInitializerExecutor? _initializerExecutor;
+
+  bool _onceNeedCall = true;
+
+  @override
+  MIInitializerExecutor? get initializerExecutor {
+    if (_initializerExecutor != null) return _initializerExecutor;
+    MIInitializerExecutor? result;
+
+    if (onceInitializer != null) {
+      result = (attempt) async {
+        if (_onceNeedCall) {
+          _onceNeedCall = false;
+          onceInitializer!(attempt.context);
+        }
+        if (simpleInitializer != null) {
+          simpleInitializer!(attempt.context);
+        }
+      };
+    } else if (simpleInitializer != null) {
+      result = (attempt) async {
+        simpleInitializer!(attempt.context);
+      };
+    }
+    return result;
+  }
+
+  @override
+  final MIInitializerErrorBuilder? initializerErrorBuilder;
 }

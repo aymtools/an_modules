@@ -3,14 +3,12 @@ part of 'modules.dart';
 /// 全局容器注册表
 final Map<String, _ModuleContainer> _registry = {};
 
-mixin _ModuleContainerManager on ModuleContainer {
+mixin _ModuleContainerSorted on _ModuleContainerBase {
   /// 父容器 id
   /// App 容器使用 kAppContainerId
   final String parentId = kAppContainerId;
 
   final Map<String, Module> _modules = {};
-
-  bool get _isInitialized;
 
 // -------------------------
   // Registration
@@ -28,7 +26,8 @@ mixin _ModuleContainerManager on ModuleContainer {
   }
 
   /// 对当前容器内的 Module 进行排序
-  List<Module> _sortModules() {
+  @override
+  List<Module> sortModules() {
     final cycle = _detectCycleInCurrentContainer();
     if (cycle != null) {
       throw StateError(

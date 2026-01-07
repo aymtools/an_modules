@@ -1,154 +1,52 @@
 part of 'modules.dart';
 
-mixin _ModuleContainerInitializers on _ModuleContainerManager {
-  MPageRouteGenerator<dynamic> _defaultPageRouteGenerator =
-      (RouteSettings settings, Widget content) {
-    return MaterialPageRoute(
-      settings: settings,
-      builder: (_) => content,
-    );
-  };
-
-  ///  设置默认的路由生成器
-  @override
-  set pageRouteGenerator(MPageRouteGenerator generator) {
-    _defaultPageRouteGenerator = generator;
-  }
-
-  /// 简单快速初始化时 注册这里
-  final List<MSInitializer> _allModuleSimpleInitializers = [];
-
-  /// 单次初始化 注册这里
-  final List<MSInitializer> _allModuleOnceInitializers = [];
+mixin _ModuleContainerInitializers on _ModuleContainerBase {
+  // /// 简单快速初始化时 注册这里
+  // final List<MSInitializer> _allModuleSimpleInitializers = [];
+  //
+  // /// 单次初始化 注册这里
+  // final List<MSInitializer> _allModuleOnceInitializers = [];
 
   /// 当模块需要自定义全局初始化时注册这里
   final List<MInitializer> _allModuleInitializers = [];
 
-  /// 所有的模块的路由解析器
-  final List<MRouteParser> _allModuleRouteParsers = [];
-
-  /// 所有的模块的路由页面生成器
-  final Map<String, MPageBuilder> _allModulePages = {};
-
-  /// 所有的模块的路由生成器
-  final Map<String, MPageRouteBuilder> _allModuleRoutes = {};
-
   @override
   bool _isInitialized = false;
 
+  @override
   void _initialize() {
+    super._initialize();
     if (_isInitialized) return;
     _isInitialized = true;
 
-    final modules = _sortModules();
+    final modules = sortModules();
     for (final module in modules) {
       module._initialize(this);
     }
+    _onInitialized(modules);
   }
 
-  /// 当无法使用[generateRouteFactory]时使用，将会无法自定义路由和路由解析拦截   模块页面生成器
-  @override
-  Map<String, WidgetBuilder> get generateRouters {
-    _initialize();
-    final Map<String, WidgetBuilder> routes = {};
-    for (final module in _allModulePages.entries) {
-      routes[module.key] = (_) => Builder(
-          builder: (context) =>
-              module.value(ModalRoute.of(context)?.settings.arguments));
-    }
-    return routes;
-  }
 
-  /// 模块路由生成器
-  /// 使用这个时无需使用 [generateRouters] 内部已经包含
-  @override
-  RouteFactory get generateRouteFactory {
-    _initialize();
-    return (RouteSettings settings) {
-      RouteSettings? config;
-      if (_allModuleRouteParsers.isNotEmpty) {
-        final context = _initializeModulesKey.currentContext!;
-
-        RouteSettings? parsing(RouteSettings settings) {
-          RouteSettings? result;
-          for (var parser in _allModuleRouteParsers) {
-            result = parser(context, settings);
-            if (result != null &&
-                (result.name != settings.name ||
-                    result.arguments != settings.arguments ||
-                    result.runtimeType != settings.runtimeType)) {
-              return result;
-            }
-          }
-          return null;
-        }
-
-        /// 如果出现了 路由转换 则需要重新执行所有的解析器
-        RouteSettings? tmp = settings;
-        while (tmp != null) {
-          config = tmp;
-          tmp = parsing(tmp);
-        }
-      }
-      config ??= settings;
-
-      // /// 不知道context 应该从哪里取
-      // if (config is Page) {
-      //   return config.createRoute(context);
-      // }
-
-      final String? name = config.name;
-      if (name == null) return null;
-      final arguments = config.arguments;
-      final MPageRouteBuilder? builder = _allModuleRoutes[name];
-      if (builder != null) {
-        Widget content = const SizedBox.shrink();
-        if (_allModulePages.containsKey(name)) {
-          content = _allModulePages[name]!(arguments);
-        }
-        final route = builder(arguments, content);
-        assert(route.settings.name == name);
-        return route;
-      } else if (_allModulePages.containsKey(name)) {
-        Widget content = _allModulePages[name]!(arguments);
-        return _defaultPageRouteGenerator(config, content);
-      }
-      return null;
-    };
-  }
-
-  GlobalKey _initializeModulesKey = GlobalKey();
-
-  final GlobalKey _initializeLoadingKey = GlobalKey();
-
-  Widget? _moduleInitializerLoading;
-
-  Widget _loadingWidget(Widget loading) {
-    _moduleInitializerLoading ??=
-        _ModuleInitializerLoading(moduleContainer: this, child: loading);
-    return _moduleInitializerLoading!;
-  }
-
-  bool _onceInitialized = false;
-
-  void _callOnceInitializer(BuildContext context) {
-    if (_onceInitialized) return;
-    _onceInitialized = true;
-    final mis = List.unmodifiable(_allModuleOnceInitializers);
-    for (final i in mis) {
-      i.call(context);
-    }
-  }
+// bool _onceInitialized = false;
+//
+// void _callOnceInitializer(BuildContext context) {
+//   if (_onceInitialized) return;
+//   _onceInitialized = true;
+//   final mis = List.unmodifiable(_allModuleOnceInitializers);
+//   for (final i in mis) {
+//     i.call(context);
+//   }
+// }
 }
 
 extension on Module {
   void _initialize(_ModuleContainerInitializers container) {
-    if (onceInitializer != null) {
-      container._allModuleOnceInitializers.add(onceInitializer!);
-    }
-    if (simpleInitializer != null) {
-      container._allModuleSimpleInitializers.add(simpleInitializer!);
-    }
+    // if (onceInitializer != null) {
+    //   container._allModuleOnceInitializers.add(onceInitializer!);
+    // }
+    // if (simpleInitializer != null) {
+    //   container._allModuleSimpleInitializers.add(simpleInitializer!);
+    // }
     if (initializer != null) {
       container._allModuleInitializers.add(initializer!);
     }

@@ -71,7 +71,7 @@ class _ModuleAssetBundle extends AssetBundle {
 }
 
 /// App的初始化管理器 用以自动化初始各个的模块配置信息 可能需要异步初始化
-class AppInitializer extends ModulesInitializer {
+class AppInitializer extends ModuleContainerInitializer {
   /// [loading] 执行异步初始化时 展示的UI信息
   AppInitializer({super.key, required super.loading, required super.child})
       : super(moduleContainer: _app);
@@ -100,15 +100,18 @@ _ModuleContainer _container(
   return moduleContainer as _ModuleContainer;
 }
 
+@Deprecated('use ModuleContainerInitializer')
+typedef ModulesInitializer = ModuleContainerInitializer;
+
 /// 模块集成包的初始化管理器
-class ModulesInitializer extends StatefulWidget {
+class ModuleContainerInitializer extends StatelessWidget {
   final ModuleContainer moduleContainer;
   final Widget loading;
   final Widget child;
 
   /// [modulePackage] 指定模块配置信息
   /// [loading] 执行异步初始化时 展示的UI信息
-  ModulesInitializer(
+  ModuleContainerInitializer(
       {GlobalKey? key,
       @Deprecated('use moduleContainer') ModuleContainer? modulePackage,
       ModuleContainer? moduleContainer,
@@ -120,11 +123,12 @@ class ModulesInitializer extends StatefulWidget {
             key: key ??
                 _container(modulePackage, moduleContainer)
                     ._initializeModulesKey) {
-    (this.moduleContainer as _ModuleContainer)._initialize();
+    final container = (this.moduleContainer as _ModuleContainer);
+    container._initialize();
+    if (key != null && key != container._initializeModulesKey) {
+      container._initializeModulesKey = key;
+    }
   }
-
-  @override
-  State<ModulesInitializer> createState() => _ModulesInitializerState();
 
   /// 直接用在 builder的快速函数
   /// ignore: non_constant_identifier_names
@@ -133,7 +137,7 @@ class ModulesInitializer extends StatefulWidget {
           ModuleContainer? moduleContainer,
           required Widget initializing,
           TransitionBuilder? builder}) =>
-      (context, child) => ModulesInitializer(
+      (context, child) => ModuleContainerInitializer(
             moduleContainer: _container(modulePackage, moduleContainer),
             loading: initializing,
             child: builder == null
@@ -148,50 +152,77 @@ class ModulesInitializer extends StatefulWidget {
   static Widget Function(BuildContext, Widget?) builderApp(
           {required Widget initializing, TransitionBuilder? builder}) =>
       AppInitializer.builder(initializing: initializing, builder: builder);
-}
-
-class _ModulesInitializerState extends State<ModulesInitializer> {
-  bool _isNotFirst = false;
-
-  _ModuleContainer get _container => widget.moduleContainer as _ModuleContainer;
-
-  void _firstBuild(BuildContext context) {
-    if (_isNotFirst) return;
-    _isNotFirst = true;
-
-    _container._callOnceInitializer(context);
-
-    final msis = List.unmodifiable(_container._allModuleSimpleInitializers);
-    for (final i in msis) {
-      final Object? debugCheckForReturnedFuture = i.call(context) as dynamic;
-
-      assert(() {
-        if (debugCheckForReturnedFuture is Future) {
-          throw FlutterError.fromParts(<DiagnosticsNode>[
-            ErrorSummary('${i.runtimeType} returned a Future.'),
-            ErrorDescription(
-                '${i.runtimeType} must be a void method without an `async` keyword.'),
-          ]);
-        }
-        return true;
-      }());
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.key != _container._initializeModulesKey) {
-      _container._initializeModulesKey = widget.key as GlobalKey;
-    }
-    _firstBuild(context);
+    final container = (moduleContainer as _ModuleContainer);
+    final loading = container._loadingWidget(this.loading);
+    return _MInitializer(
+      loading: (_) => loading,
+      onSuccess: (_) => _ModuleContainerInitializer(
+        moduleContainer: container,
+        loading: loading,
+        child: child,
+      ),
+      moduleContainer: container,
+    );
+  }
+}
+
+class _ModuleContainerInitializer extends StatefulWidget {
+  final _ModuleContainer moduleContainer;
+  final Widget loading;
+  final Widget child;
+
+  const _ModuleContainerInitializer(
+      {required this.moduleContainer,
+      required this.loading,
+      required this.child});
+
+  @override
+  State<_ModuleContainerInitializer> createState() =>
+      _ModuleContainerInitializerState();
+}
+
+class _ModuleContainerInitializerState
+    extends State<_ModuleContainerInitializer> {
+  // bool _isNotFirst = false;
+
+  _ModuleContainer get _container => widget.moduleContainer;
+
+  // void _firstBuild(BuildContext context) {
+  //   if (_isNotFirst) return;
+  //   _isNotFirst = true;
+  //
+  //   _container._callOnceInitializer(context);
+  //
+  //   final msis = List.unmodifiable(_container._allModuleSimpleInitializers);
+  //   for (final i in msis) {
+  //     final Object? debugCheckForReturnedFuture = i.call(context) as dynamic;
+  //
+  //     assert(() {
+  //       if (debugCheckForReturnedFuture is Future) {
+  //         throw FlutterError.fromParts(<DiagnosticsNode>[
+  //           ErrorSummary('${i.runtimeType} returned a Future.'),
+  //           ErrorDescription(
+  //               '${i.runtimeType} must be a void method without an `async` keyword.'),
+  //         ]);
+  //       }
+  //       return true;
+  //     }());
+  //   }
+  // }
+
+  @override
+  Widget build(BuildContext context) {
+    // _firstBuild(context);
     final mis = List.unmodifiable(_container._allModuleInitializers.reversed);
-    final loading = _container._loadingWidget(widget.loading);
     var result = widget.child;
     for (final wrapper in mis) {
       result = _ModuleInitializerWrapper(
           key: ValueKey(wrapper),
           wrapper: wrapper,
-          loading: loading,
+          loading: widget.loading,
           child: result);
     }
     return result;
@@ -217,7 +248,7 @@ class _ModuleInitializerWrapper extends StatelessWidget {
 }
 
 class _ModuleInitializerLoading extends StatelessWidget {
-  final _ModuleContainerInitializers moduleContainer;
+  final _ModuleContainerBase moduleContainer;
   final Widget child;
 
   _ModuleInitializerLoading(
