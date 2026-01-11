@@ -1,11 +1,11 @@
 part of 'modules.dart';
 
-class MIAttempt {
+class MIContext {
   BuildContext? _context;
   final int count;
   final Object? lastError;
 
-  MIAttempt({
+  MIContext({
     required this.count,
     this.lastError,
   });
@@ -14,11 +14,11 @@ class MIAttempt {
 
   BuildContext get context => _context!;
 
-  MIAttempt copyWith({
+  MIContext copyWith({
     int? count,
     Object? lastError,
   }) {
-    return MIAttempt(
+    return MIContext(
       count: count ?? this.count,
       lastError: lastError ?? this.lastError,
     );
@@ -43,26 +43,26 @@ class MIController {
   void ignore() => _manager.ignore(_taskId);
 }
 
-typedef MIInitializerExecutor = FutureOr<void> Function(
-  MIAttempt attempt,
+typedef MInitializerExecutor = FutureOr<void> Function(
+  MIContext attempt,
 );
 
-typedef MIInitializerErrorBuilder = Widget Function(
+typedef MInitializerErrorBuilder = Widget Function(
   BuildContext context,
   Object error,
-  MIAttempt attempt,
+  MIContext attempt,
   MIController controller,
 );
 
 class _MITask {
   final Module task;
-  MIAttempt attempt;
+  MIContext attempt;
   MIState state;
 
   String get id => task.name;
 
   _MITask(this.task)
-      : attempt = MIAttempt(count: 0),
+      : attempt = MIContext(count: 0),
         state = MIState.idle;
 
   List<String> get requiredDependencies => task.requiredDependencies;
@@ -72,9 +72,9 @@ class _MITask {
   List<String> get dependencies =>
       [...requiredDependencies, ...optionalDependencies];
 
-  MIInitializerErrorBuilder? get errorBuilder => task.initializerErrorBuilder;
+  MInitializerErrorBuilder? get errorBuilder => task.initializerErrorBuilder;
 
-  MIInitializerExecutor? get executor => task.initializerExecutor;
+  MInitializerExecutor? get executor => task.initializerExecutor;
 }
 
 mixin _ModuleContainerMInitializers

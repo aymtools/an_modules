@@ -32,7 +32,7 @@ typedef MSInitializer = void Function(BuildContext context);
 
 /// 路由解析器 返回 [null] 时，表示非当前模块内的路由 当前不关注
 /// 非常小心 注意死循环
-/// [context] 是通过ModulesInitializer获取的 非Navigator 或者 Route 相关的 请勿使用相关功能
+/// [context] 是通过ModulesInitializer获取的 非Navigator 或者 Route 相关的context 请勿使用相关功能
 typedef MRouteParser = RouteSettings? Function(
     BuildContext context, RouteSettings settings);
 
@@ -41,6 +41,18 @@ typedef MPageRouteGenerator<T> = PageRoute<T> Function(
     RouteSettings settings, Widget content);
 
 /// Modularization 模块抽象类
+/// - [name] 模块名称
+/// - [requiredDependencies] 必须依赖的模块
+/// - [optionalDependencies] 可选依赖的模块
+/// - [pages] 模块内所包含的页面信息
+/// - [pageWrapper] 对模块内的page 增加一个转换器可以统一的注入所需的 内容
+/// - [routes] 模块内所包含的路由页面信息
+/// - [routeParser] 路由解析器 所有模块都会被调用执行
+/// - [initializer] **已过时** 如果模块需要异步化的初始化 会串行执行 最晚执行
+/// - [simpleInitializer] **已过时** 简易初始化器 [initializerExecutor]存在时不会执行
+/// - [onceInitializer] **已过时**  单次快速初始化器 [initializerExecutor]存在时不会执行
+/// - [initializerExecutor] 可以以Future的定义一个函数进行初始化 会解析依赖关系 按照依赖自动排序执行
+/// - [initializerErrorBuilder] 定义初始化失败时如何处理 可选重试或拦截  为空时 忽略错误 继续执行后续的初始化
 abstract class Module {
   /// 模块名称
   String get name;
@@ -72,10 +84,11 @@ abstract class Module {
   /// 指定当前模块内的路由解析器 仅仅对[routes] 生效
   MRouteParser? get routeParser => null;
 
-  MIInitializerExecutor? get initializerExecutor;
+  /// 块初始化器，提供一个[FutureOr&lt;void>],
+  MInitializerExecutor? get initializerExecutor;
 
   /// 未设置时为忽略错误 继续初始化
-  MIInitializerErrorBuilder? get initializerErrorBuilder;
+  MInitializerErrorBuilder? get initializerErrorBuilder;
 
   /// 模块的所有信息
   /// - [name] packageName 会自动替换assets
@@ -84,13 +97,13 @@ abstract class Module {
   /// - [pages] 模块内所包含的页面信息
   /// - [pageWrapper] 对模块内的page 增加一个转换器可以统一的注入所需的 内容
   /// - [routes] 模块内所包含的路由信息
+  /// - [routeParser] 模块内的路由解析器 执行路由解析时  所有模块都会被调用执行
   /// - [initializer] **已过时** 如果模块需要异步化的初始化 会串行执行
-  /// - [simpleInitializer] **已过时** 模块简单的同步化的初始器
-  /// - [onceInitializer] **已过时** 整个app内只会调用一次从初始化器
-  /// - [routeParser] 模块内的路由解析器
+  /// - [simpleInitializer] **已过时** 模块简单的同步化的初始器 [initializerExecutor]存在时不会执行
+  /// - [onceInitializer] **已过时** 整个app内只会调用一次从初始化器 [initializerExecutor]存在时不会执行
   /// - [initializerExecutor] 模块初始化器，提供一个[FutureOr&lt;void>],
   /// 如果设置了 [initializerErrorBuilder] 的重试，则要允许重试执行。
-  /// 如果没有依赖则并行future 如果存在依赖，按照依赖串行执行
+  /// 如果没有依赖则并行future 如果存在依赖，按照依赖顺序执行
   /// - [initializerErrorBuilder] 初始化失败时如何处理
   factory Module({
     required String name,
@@ -105,8 +118,8 @@ abstract class Module {
     @Deprecated('use initializerExecutor, v1.2.0')
     MSInitializer? onceInitializer,
     MRouteParser? routeParser,
-    MIInitializerExecutor? initializerExecutor,
-    MIInitializerErrorBuilder? initializerErrorBuilder,
+    MInitializerExecutor? initializerExecutor,
+    MInitializerErrorBuilder? initializerErrorBuilder,
   }) =>
       _Module(
           name: name,
@@ -192,4 +205,7 @@ abstract class ModuleContainer {
   @Deprecated('will remove')
   factory ModuleContainer({String id = kAppContainerId}) =>
       _ModuleContainer._(id: id);
+
+  /// 保持兼容性
+  void registerModule(Module module) => register(module);
 }

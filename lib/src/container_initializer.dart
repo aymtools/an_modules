@@ -26,7 +26,6 @@ mixin _ModuleContainerInitializers on _ModuleContainerBase {
     _onInitialized(modules);
   }
 
-
 // bool _onceInitialized = false;
 //
 // void _callOnceInitializer(BuildContext context) {

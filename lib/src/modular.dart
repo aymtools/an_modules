@@ -12,7 +12,7 @@ class _Module implements Module {
     this.pageWrapper,
     Map<String, MPageRouteBuilder>? routes,
     this.routeParser,
-    MIInitializerExecutor? initializerExecutor,
+    MInitializerExecutor? initializerExecutor,
     this.initializerErrorBuilder,
   })  : requiredDependencies = requiredDependencies == null
             ? const []
@@ -53,14 +53,14 @@ class _Module implements Module {
   @override
   final MRouteParser? routeParser;
 
-  final MIInitializerExecutor? _initializerExecutor;
+  final MInitializerExecutor? _initializerExecutor;
 
   bool _onceNeedCall = true;
 
   @override
-  MIInitializerExecutor? get initializerExecutor {
+  MInitializerExecutor? get initializerExecutor {
     if (_initializerExecutor != null) return _initializerExecutor;
-    MIInitializerExecutor? result;
+    MInitializerExecutor? result;
 
     if (onceInitializer != null) {
       result = (attempt) async {
@@ -81,5 +81,5 @@ class _Module implements Module {
   }
 
   @override
-  final MIInitializerErrorBuilder? initializerErrorBuilder;
+  final MInitializerErrorBuilder? initializerErrorBuilder;
 }

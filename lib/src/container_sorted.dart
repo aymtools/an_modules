@@ -22,6 +22,17 @@ mixin _ModuleContainerSorted on _ModuleContainerBase {
     if (_modules.containsKey(module.name)) {
       throw StateError('Module already registered: ${module.name}');
     }
+    assert(() {
+      if (module.name.isEmpty) {
+        if (id == kAppContainerId) {
+          return true;
+        } else {
+          throw StateError('Module name is empty');
+        }
+      }
+      return true;
+    }(), '${module.name} is empty');
+
     _modules[module.name] = module;
   }
 

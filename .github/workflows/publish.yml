@@ -1,4 +1,6 @@
 # .github/workflows/publish.yml
+# - 预发布 vX.Y.Z-(pre/dev/beta/rc).X 只检查不发布
+#- 正式发布 vX.Y.Z 会执行所有检查并使用OIDC的方式发布
 name: Publish to pub.dev
 
 on:
