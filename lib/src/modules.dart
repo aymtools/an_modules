@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 part 'container.dart';
 part 'container_base.dart';
+part 'container_core.dart';
 part 'container_initializer.dart';
 part 'container_module_initializer.dart';
 part 'container_routes.dart';
@@ -179,7 +180,7 @@ abstract class Module {
 ModuleContainer get app => _app;
 
 /// App（根）ModuleContainer 的 id
-const String kAppContainerId = "";
+const String kAppContainerId = "app";
 
 /// 记录和管理模块合集
 abstract class ModuleContainer {
@@ -208,4 +209,6 @@ abstract class ModuleContainer {
 
   /// 保持兼容性
   void registerModule(Module module) => register(module);
+
+  set parentContainerId(String containerId);
 }

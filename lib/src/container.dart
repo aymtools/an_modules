@@ -27,17 +27,23 @@ class _ModuleContainer extends ModuleContainer
   }
 
   static _ModuleContainer _getOrCreate(String id) {
-    if (id.isEmpty) return _app;
+    if (id.isEmpty) return throw StateError('ModuleContainer id is empty');
+    if (id == kAppContainerId) return _app;
+    if (id == kCoreContainerId) return _core;
     return _registry.putIfAbsent(id, () => _ModuleContainer._(id: id));
   }
 
   static _ModuleContainer? _getOrNull(String id) {
-    if (id.isEmpty) return _app;
+    if (id.isEmpty) return null;
+    if (id == kAppContainerId) return _app;
+    if (id == kCoreContainerId) return _core;
     return _registry[id];
   }
 
   static bool _hasContainer(String id) {
-    if (id.isEmpty) return true;
+    if (id.isEmpty) return false;
+    if (id == kAppContainerId) return true;
+    if (id == kCoreContainerId) return true;
     return _registry.containsKey(id);
   }
 }

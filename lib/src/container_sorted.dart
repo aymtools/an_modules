@@ -5,8 +5,8 @@ final Map<String, _ModuleContainer> _registry = {};
 
 mixin _ModuleContainerSorted on _ModuleContainerBase {
   /// 父容器 id
-  /// App 容器使用 kAppContainerId
-  final String parentId = kAppContainerId;
+  ///  容器使用 kCoreContainerId
+  String parentId = kCoreContainerId;
 
   final Map<String, Module> _modules = {};
 
@@ -36,6 +36,15 @@ mixin _ModuleContainerSorted on _ModuleContainerBase {
     _modules[module.name] = module;
   }
 
+  @override
+  set parentContainerId(String containerId) {
+    if (parentId != kCoreContainerId) {
+      parentId = containerId;
+    } else {
+      assert(false, 'set parentContainerId can not call multiple times');
+    }
+  }
+
   /// 对当前容器内的 Module 进行排序
   @override
   List<Module> sortModules() {
@@ -54,10 +63,13 @@ mixin _ModuleContainerSorted on _ModuleContainerBase {
   // -------------------------
 
   _ModuleContainer? get _parentContainer {
-    if (id == kAppContainerId) return null;
-    if (parentId == kAppContainerId || parentId.isEmpty) {
+    if (parentId == kAppContainerId) {
       return _app;
     }
+    if (parentId == kCoreContainerId) {
+      return _core;
+    }
+
     return _registry[parentId];
   }
 

@@ -158,13 +158,17 @@ class ModuleContainerInitializer extends StatelessWidget {
     final container = (moduleContainer as _ModuleContainer);
     final loading = container._loadingWidget(this.loading);
     return _MInitializer(
+      moduleContainer: _core,
       loading: (_) => loading,
-      onSuccess: (_) => _ModuleContainerInitializer(
+      onSuccess: (_) => _MInitializer(
+        loading: (_) => loading,
+        onSuccess: (_) => _ModuleContainerInitializer(
+          moduleContainer: container,
+          loading: loading,
+          child: child,
+        ),
         moduleContainer: container,
-        loading: loading,
-        child: child,
       ),
-      moduleContainer: container,
     );
   }
 }

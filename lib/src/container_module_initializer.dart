@@ -96,11 +96,13 @@ mixin _ModuleContainerMInitializers
   }
 
   bool get isDone {
-    return _tasks.values.map((e) => e.state).every((s) => s == MIState.success);
+    return _tasks.isEmpty ||
+        _tasks.values.map((e) => e.state).every((s) => s == MIState.success);
   }
 
   bool get hasNext {
-    return _tasks.values.map((e) => e.state).any((s) => s != MIState.success);
+    return _tasks.isNotEmpty &&
+        _tasks.values.map((e) => e.state).any((s) => s != MIState.success);
   }
 
   _MITask? get firstWaitingTask {
@@ -155,10 +157,17 @@ mixin _ModuleContainerMInitializers
         _run(task);
       }
     }
+    if (isDone) {
+      _context = null;
+    }
   }
 
   bool _depForParent(String dep) {
-    return _parentContainer?.hasModule(dep) == true;
+    final parent = _parentContainer;
+    if (parent == null) return false;
+    if (parent.hasModule(dep)) return true;
+
+    return parent._depForParent(dep);
   }
 
   bool _canRun(_MITask task) {
@@ -235,10 +244,13 @@ class _MInitializer extends StatefulWidget {
 class _MInitializerState extends State<_MInitializer> {
   bool _isInitialized = false;
 
-  void _initialize() {
+  Future<void> _initialize() async {
     if (_isInitialized) return;
     _isInitialized = true;
-    widget._manager.attachContext(context);
+    final ctx = context;
+
+    // ignore: use_build_context_synchronously
+    widget._manager.attachContext(ctx);
     widget._manager.runAll();
   }
 
