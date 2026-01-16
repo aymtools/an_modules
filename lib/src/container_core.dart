@@ -37,7 +37,7 @@ class _CoreModuleContainer extends _ModuleContainer {
 
   @override
   Future<void> runAll() async {
-    if (isDone) return;
+    if (_isInitialized && isDone) return;
     if (_isRunAll) return;
     _isRunAll = true;
     _initialize();
