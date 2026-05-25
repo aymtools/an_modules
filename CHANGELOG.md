@@ -1,3 +1,7 @@
+## 1.3.0
+
+* Added other customizable configurations within the module.
+
 ## 1.2.0
 
 * Allow specifying inter-module dependencies

@@ -201,4 +201,12 @@ mixin _ModuleContainerSorted on _ModuleContainerBase {
   bool hasModule(String moduleName) {
     return _modules.containsKey(moduleName);
   }
+
+  @override
+  Map<String, Object?> getModuleOtherConfig(String moduleName) {
+    if (!_isInitialized) return {};
+    final m = _modules[moduleName];
+    if (m == null || m is! _Module) return {};
+    return m.otherConfigs;
+  }
 }

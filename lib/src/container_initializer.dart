@@ -9,6 +9,7 @@ mixin _ModuleContainerInitializers on _ModuleContainerBase {
 
   /// 当模块需要自定义全局初始化时注册这里
   final List<MInitializer> _allModuleInitializers = [];
+  final List<String> _allModuleNames = [];
 
   @override
   bool _isInitialized = false;
@@ -24,6 +25,7 @@ mixin _ModuleContainerInitializers on _ModuleContainerBase {
       module._initialize(this);
     }
     _onInitialized(modules);
+    _allModuleNames.addAll(modules.map((e) => e.name));
   }
 
 // bool _onceInitialized = false;
@@ -36,6 +38,9 @@ mixin _ModuleContainerInitializers on _ModuleContainerBase {
 //     i.call(context);
 //   }
 // }
+
+  @override
+  List<String> getModulesNames() => List.from(_allModuleNames, growable: false);
 }
 
 extension on Module {

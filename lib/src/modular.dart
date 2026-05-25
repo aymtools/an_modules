@@ -14,6 +14,7 @@ class _Module implements Module {
     this.routeParser,
     MInitializerExecutor? initializerExecutor,
     this.initializerErrorBuilder,
+    this.otherConfigs = const {},
   })  : requiredDependencies = requiredDependencies == null
             ? const []
             : List.unmodifiable(requiredDependencies),
@@ -54,6 +55,8 @@ class _Module implements Module {
   final MRouteParser? routeParser;
 
   final MInitializerExecutor? _initializerExecutor;
+
+  final Map<String, Object?> otherConfigs;
 
   bool _onceNeedCall = true;
 

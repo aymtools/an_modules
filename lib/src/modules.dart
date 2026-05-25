@@ -4,14 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 part 'container.dart';
+
 part 'container_base.dart';
+
 part 'container_core.dart';
+
 part 'container_initializer.dart';
+
 part 'container_module_initializer.dart';
+
 part 'container_routes.dart';
+
 part 'container_sorted.dart';
+
 part 'modular.dart';
+
 part 'routes.dart';
+
 part 'widgets.dart';
 
 /// 路由页面
@@ -121,20 +130,23 @@ abstract class Module {
     MRouteParser? routeParser,
     MInitializerExecutor? initializerExecutor,
     MInitializerErrorBuilder? initializerErrorBuilder,
+    Map<String, Object?>? otherConfigs,
   }) =>
       _Module(
-          name: name,
-          requiredDependencies: requiredDependencies,
-          optionalDependencies: optionalDependencies,
-          initializer: initializer,
-          simpleInitializer: simpleInitializer,
-          onceInitializer: onceInitializer,
-          pages: pages,
-          pageWrapper: pageWrapper,
-          routes: routes,
-          routeParser: routeParser,
-          initializerExecutor: initializerExecutor,
-          initializerErrorBuilder: initializerErrorBuilder);
+        name: name,
+        requiredDependencies: requiredDependencies,
+        optionalDependencies: optionalDependencies,
+        initializer: initializer,
+        simpleInitializer: simpleInitializer,
+        onceInitializer: onceInitializer,
+        pages: pages,
+        pageWrapper: pageWrapper,
+        routes: routes,
+        routeParser: routeParser,
+        initializerExecutor: initializerExecutor,
+        initializerErrorBuilder: initializerErrorBuilder,
+        otherConfigs: otherConfigs ?? {},
+      );
 
   /// 注册一个模块
   static void registerModule(
@@ -211,4 +223,10 @@ abstract class ModuleContainer {
   void registerModule(Module module) => register(module);
 
   set parentContainerId(String containerId);
+
+  /// 获取所有的已注册模块名字，须在初始化之后
+  List<String> getModulesNames();
+
+  /// 获取模块提供的其他配置内容 ，须在初始化之后
+  Map<String, Object?> getModuleOtherConfig(String moduleName);
 }
