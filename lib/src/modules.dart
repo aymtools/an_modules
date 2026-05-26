@@ -228,5 +228,53 @@ abstract class ModuleContainer {
   List<String> getModulesNames();
 
   /// 获取模块提供的其他配置内容 ，须在初始化之后
-  Map<String, Object?> getModuleOtherConfig(String moduleName);
+  Map<String, Object?> getModuleOtherConfigs(String moduleName);
+}
+
+extension ModuleContainerModulesOtherConfigByKeyExt on ModuleContainer {
+  /// 根据key筛选当前注册的模块中的附属配置信息
+  List<T> getAllModulesOtherConfigByKey<T>(
+    String key, {
+    T Function(Map<String, dynamic>)? mapConvert,
+    T Function(String)? strConvert,
+    T? Function(Object)? convert,
+  }) {
+    return getModulesNames()
+        .map((e) => (e, getModuleOtherConfigs(e)[key]))
+        .map((s) {
+          final e = s.$2;
+          if (e is T) return e;
+          if (e == null) return null;
+          final mName = s.$1;
+
+          if (e is Map<String, dynamic> && mapConvert != null) {
+            try {
+              return mapConvert(e);
+            } catch (err) {
+              assert(false,
+                  'Module $mName otherConfig $key mapConvert to $T error: $err');
+            }
+          }
+          if (e is String && strConvert != null) {
+            try {
+              return strConvert(e);
+            } catch (err) {
+              assert(false,
+                  'Module $mName otherConfig $key strConvert to $T error: $err');
+            }
+          }
+          if (convert != null) {
+            try {
+              final r = convert(e);
+              if (r != null) return r;
+            } catch (err) {
+              assert(false,
+                  'Module $mName otherConfig $key convert to $T error: $err');
+            }
+          }
+          return null;
+        })
+        .whereType<T>()
+        .toList();
+  }
 }

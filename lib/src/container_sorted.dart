@@ -203,7 +203,7 @@ mixin _ModuleContainerSorted on _ModuleContainerBase {
   }
 
   @override
-  Map<String, Object?> getModuleOtherConfig(String moduleName) {
+  Map<String, Object?> getModuleOtherConfigs(String moduleName) {
     if (!_isInitialized) return {};
     final m = _modules[moduleName];
     if (m == null || m is! _Module) return {};
