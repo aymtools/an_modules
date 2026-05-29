@@ -238,18 +238,30 @@ extension ModuleContainerModulesOtherConfigByKeyExt on ModuleContainer {
     T Function(Map<String, dynamic>)? mapConvert,
     T Function(String)? strConvert,
     T? Function(Object)? convert,
+  }) =>
+      getAllModulesOtherConfigByKey2<T>(key,
+              mapConvert: mapConvert, strConvert: strConvert, convert: convert)
+          .map((e) => e.configs)
+          .toList();
+
+  /// 根据key筛选当前注册的模块中的附属配置信息
+  List<({String moduleName, T configs})> getAllModulesOtherConfigByKey2<T>(
+    String key, {
+    T Function(Map<String, dynamic>)? mapConvert,
+    T Function(String)? strConvert,
+    T? Function(Object)? convert,
   }) {
     return getModulesNames()
         .map((e) => (e, getModuleOtherConfigs(e)[key]))
         .map((s) {
           final e = s.$2;
-          if (e is T) return e;
-          if (e == null) return null;
           final mName = s.$1;
+          if (e is T) return (moduleName: mName, configs: e);
+          if (e == null) return null;
 
           if (e is Map<String, dynamic> && mapConvert != null) {
             try {
-              return mapConvert(e);
+              return (moduleName: mName, configs: mapConvert(e));
             } catch (err) {
               assert(false,
                   'Module $mName otherConfig $key mapConvert to $T error: $err');
@@ -257,7 +269,7 @@ extension ModuleContainerModulesOtherConfigByKeyExt on ModuleContainer {
           }
           if (e is String && strConvert != null) {
             try {
-              return strConvert(e);
+              return (moduleName: mName, configs: strConvert(e));
             } catch (err) {
               assert(false,
                   'Module $mName otherConfig $key strConvert to $T error: $err');
@@ -266,7 +278,7 @@ extension ModuleContainerModulesOtherConfigByKeyExt on ModuleContainer {
           if (convert != null) {
             try {
               final r = convert(e);
-              if (r != null) return r;
+              if (r != null) return (moduleName: mName, configs: r);
             } catch (err) {
               assert(false,
                   'Module $mName otherConfig $key convert to $T error: $err');
@@ -274,7 +286,7 @@ extension ModuleContainerModulesOtherConfigByKeyExt on ModuleContainer {
           }
           return null;
         })
-        .whereType<T>()
+        .whereType<({String moduleName, T configs})>()
         .toList();
   }
 }
