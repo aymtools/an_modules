@@ -54,11 +54,9 @@ class _ModuleAssetBundle extends AssetBundle {
   @override
   Future<ByteData> load(String key) {
     if (key.startsWith('asset')) {
-      try {
-        return _parent.load('packages/$_package/$key');
-      } catch (_) {
-        return _parent.load(key);
-      }
+      return _parent
+          .load('packages/$_package/$key')
+          .catchError((_) => _parent.load(key));
     }
     return _parent.load(key);
   }
