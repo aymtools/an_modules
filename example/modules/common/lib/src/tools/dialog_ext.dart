@@ -1,5 +1,4 @@
 import 'package:an_dialogs/an_dialogs.dart';
-import 'package:an_dialogs/pop_intercept.dart';
 import 'package:an_lifecycle_cancellable/an_lifecycle_cancellable.dart';
 import 'package:an_viewmodel/an_viewmodel.dart';
 import 'package:anlifecycle/anlifecycle.dart';
@@ -8,10 +7,15 @@ import 'package:flutter/material.dart';
 
 initDialogs() {
   final dConfigs = DialogsConfig.instance;
-  dConfigs.onBackPressedIntercept = (child) => PopScopeCompat(child: child);
+  dConfigs.onBackPressedIntercept = (child) => PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        // didPop 始终为 false，不执行任何 pop 操作即实现永远拦截
+      },
+      child: child);
 
   final lConfigs = LoadingConfig.instance;
-  lConfigs.onBackPressedIntercept = (child) => PopScopeCompat(child: child);
+  lConfigs.onBackPressedIntercept = dConfigs.onBackPressedIntercept;
 }
 
 extension DialogForLifecycleExt on Lifecycle {

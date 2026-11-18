@@ -2,12 +2,7 @@ part of 'modules.dart';
 
 mixin _ModuleContainerRoutes on _ModuleContainerBase {
   MPageRouteGenerator<dynamic> _defaultPageRouteGenerator =
-      (RouteSettings settings, Widget content) {
-    return MaterialPageRoute(
-      settings: settings,
-      builder: (_) => content,
-    );
-  };
+      defaultPageRouteGenerator;
 
   ///  设置默认的路由生成器
   @override
